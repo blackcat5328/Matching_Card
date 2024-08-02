@@ -4,7 +4,7 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const MoleModel = React.memo(function MoleModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
+  const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
     
@@ -16,87 +16,29 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Mole({ position, isActive, onWhack }) {
-    const moleRef = useRef();
-    const [moleY, setMoleY] = useState(-1);
+  function Card({ position, isMatched, onFlip }) {
+    const cardRef = useRef();
+    const [cardRotation, setCardRotation] = useState(0);
 
     useFrame((state, delta) => {
-      if (moleRef.current) {
-        const targetY = isActive ? 0 : -1;
-        setMoleY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
-        moleRef.current.position.y = moleY;
+      if (cardRef.current) {
+        const targetRotation = isMatched ? Math.PI / 2 : 0;
+        setCardRotation(current => THREE.MathUtils.lerp(current, targetRotation, delta * 5));
+        cardRef.current.rotation.y = cardRotation;
       }
     });
 
     return React.createElement(
       'group',
       { 
-        ref: moleRef,
+        ref: cardRef,
         position: position,
-        onClick: onWhack
+        onClick: onFlip
       },
-      React.createElement(MoleModel, { 
-        url: `${assetsUrl}/mole.glb`,
-        scale: [3, 3, 3],
-        position: [0, -0.5, 0]
-      })
-    );
-  }
-
-  const HammerModel = React.memo(function HammerModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
-    const gltf = useLoader(GLTFLoader, url);
-    const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-    
-    useEffect(() => {
-      copiedScene.scale.set(...scale);
-      copiedScene.position.set(...position);
-      copiedScene.rotation.set(...rotation);
-    }, [copiedScene, scale, position, rotation]);
-
-    return React.createElement('primitive', { object: copiedScene });
-  });
-
-  function Hammer() {
-    const hammerRef = useRef();
-    const { camera, mouse } = useThree();
-    const [isHitting, setIsHitting] = useState(false);
-    const hitStartTime = useRef(0);
-
-    useFrame((state, delta) => {
-      if (hammerRef.current) {
-        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-        vector.unproject(camera);
-        const dir = vector.sub(camera.position).normalize();
-        const distance = -camera.position.z / dir.z;
-        const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-        hammerRef.current.position.copy(pos);
-
-        // Hitting animation
-        if (isHitting) {
-          const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
-          if (elapsedTime < 0.2) {
-            hammerRef.current.rotation.x = Math.PI / 2 * Math.sin(elapsedTime * Math.PI / 0.2);
-          } else {
-            setIsHitting(false);
-            hammerRef.current.rotation.x = 0;
-          }
-        }
-      }
-    });
-
-    const handleClick = () => {
-      setIsHitting(true);
-      hitStartTime.current = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0, 1), 0, 1);
-    };
-
-    return React.createElement(
-      'group',
-      { ref: hammerRef, onClick: handleClick },
-      React.createElement(HammerModel, { 
-        url: `${assetsUrl}/hammer.glb`,
-        scale: [20, 20, 20],
-        position: [0, 0, -2],
-        rotation: [-Math.PI / 2, 0, 0]
+      React.createElement(CardModel, { 
+        url: `${assetsUrl}/card.glb`,
+        scale: [2, 2, 0.5],
+        position: [0, 0, 0]
       })
     );
   }
@@ -112,52 +54,55 @@ window.initGame = (React, assetsUrl) => {
     return null;
   }
 
-  function WhackAMole3D() {
-    const [moles, setMoles] = useState(Array(9).fill(false));
+  function MatchingCardGame() {
+    const [cards, setCards] = useState(Array(18).fill(false));
     const [score, setScore] = useState(0);
+    const [flippedIndices, setFlippedIndices] = useState([]);
 
     useEffect(() => {
-      const popUpMole = () => {
-        setMoles(prevMoles => {
-          const newMoles = [...prevMoles];
-          const inactiveIndices = newMoles.reduce((acc, mole, index) => !mole ? [...acc, index] : acc, []);
-          if (inactiveIndices.length > 0) {
-            const randomIndex = inactiveIndices[Math.floor(Math.random() * inactiveIndices.length)];
-            newMoles[randomIndex] = true;
-          }
-          return newMoles;
-        });
+      const shuffleCards = () => {
+        const newCards = Array(18)
+          .fill()
+          .map((_, i) => ({
+            index: i,
+            value: Math.floor(i / 2)
+          }))
+          .sort(() => Math.random() - 0.5);
+        setCards(newCards.map(card => false));
       };
 
-      const popDownMole = () => {
-        setMoles(prevMoles => {
-          const newMoles = [...prevMoles];
-          const activeIndices = newMoles.reduce((acc, mole, index) => mole ? [...acc, index] : acc, []);
-          if (activeIndices.length > 0) {
-            const randomIndex = activeIndices[Math.floor(Math.random() * activeIndices.length)];
-            newMoles[randomIndex] = false;
-          }
-          return newMoles;
-        });
-      };
-
-      const popUpInterval = setInterval(popUpMole, 1000);
-      const popDownInterval = setInterval(popDownMole, 2000);
-
-      return () => {
-        clearInterval(popUpInterval);
-        clearInterval(popDownInterval);
-      };
+      shuffleCards();
     }, []);
 
-    const whackMole = (index) => {
-      if (moles[index]) {
-        setScore(prevScore => prevScore + 1);
-        setMoles(prevMoles => {
-          const newMoles = [...prevMoles];
-          newMoles[index] = false;
-          return newMoles;
+    const flipCard = (index) => {
+      if (!cards[index]) {
+        setCards(prevCards => {
+          const newCards = [...prevCards];
+          newCards[index] = true;
+          setFlippedIndices(prevIndices => [...prevIndices, index]);
+          return newCards;
         });
+
+        if (flippedIndices.length === 1 && cards[flippedIndices[0]] === cards[index]) {
+          setScore(prevScore => prevScore + 1);
+          setCards(prevCards => {
+            const newCards = [...prevCards];
+            newCards[flippedIndices[0]] = true;
+            newCards[index] = true;
+            setFlippedIndices([]);
+            return newCards;
+          });
+        } else if (flippedIndices.length === 2) {
+          setTimeout(() => {
+            setCards(prevCards => {
+              const newCards = [...prevCards];
+              newCards[flippedIndices[0]] = false;
+              newCards[flippedIndices[1]] = false;
+              setFlippedIndices([]);
+              return newCards;
+            });
+          }, 1000);
+        }
       }
     };
 
@@ -167,23 +112,23 @@ window.initGame = (React, assetsUrl) => {
       React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
-      moles.map((isActive, index) => 
-        React.createElement(Mole, {
+      cards.map((isMatched, index) => 
+        React.createElement(Card, {
           key: index,
           position: [
-            (index % 3 - 1) * 4,
+            (index % 6 - 2.5) * 4,
             0,
-            (Math.floor(index / 3) - 1) * 4
+            (Math.floor(index / 6) - 1.5) * 4
           ],
-          isActive: isActive,
-          onWhack: () => whackMole(index)
+          isMatched: isMatched,
+          onFlip: () => flipCard(index)
         })
       ),
-      React.createElement(Hammer)
+      React.createElement('div', { style: { position: 'absolute', top: '20px', left: '20px', color: 'white' } }, `Score: ${score}`)
     );
   }
 
-  return WhackAMole3D;
+  return MatchingCardGame;
 };
 
-console.log('3D Whack-a-Mole game script loaded');
+console.log('Matching Card game script loaded');
