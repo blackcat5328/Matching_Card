@@ -1,6 +1,6 @@
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, Suspense, useMemo } = React;
-  const { useLoader, useThree } = window.ReactThreeFiber;
+  const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
@@ -20,11 +20,13 @@ window.initGame = (React, assetsUrl) => {
     const moleRef = useRef();
     const [moleY, setMoleY] = useState(-1);
 
-    useEffect(() => {
+    useFrame((state, delta) => {
       if (moleRef.current) {
-        moleRef.current.position.y = isActive ? 0 : -1;
+        const targetY = isActive ? 0 : -1;
+        setMoleY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
+        moleRef.current.position.y = moleY;
       }
-    }, [isActive]);
+    });
 
     return React.createElement(
       'group',
@@ -60,7 +62,7 @@ window.initGame = (React, assetsUrl) => {
     const [isHitting, setIsHitting] = useState(false);
     const hitStartTime = useRef(0);
 
-    useEffect(() => {
+    useFrame((state, delta) => {
       if (hammerRef.current) {
         const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
         vector.unproject(camera);
@@ -71,20 +73,20 @@ window.initGame = (React, assetsUrl) => {
 
         // Hitting animation
         if (isHitting) {
-          const elapsedTime = performance.now() - hitStartTime.current;
-          if (elapsedTime < 200) {
-            hammerRef.current.rotation.x = Math.PI / 2 * Math.sin(elapsedTime * Math.PI / 200);
+          const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
+          if (elapsedTime < 0.2) {
+            hammerRef.current.rotation.x = Math.PI / 2 * Math.sin(elapsedTime * Math.PI / 0.2);
           } else {
             setIsHitting(false);
             hammerRef.current.rotation.x = 0;
           }
         }
       }
-    }, [camera, mouse, isHitting, hitStartTime]);
+    });
 
     const handleClick = () => {
       setIsHitting(true);
-      hitStartTime.current = performance.now();
+      hitStartTime.current = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0, 1), 0, 1);
     };
 
     return React.createElement(
