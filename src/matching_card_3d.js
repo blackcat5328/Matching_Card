@@ -1,13 +1,13 @@
-window.initMatchingCardGame = (React, assetsUrl) => {
-  const { useState, useEffect, useRef, useMemo } = React;
-  const { useLoader } = window.ReactThreeFiber;
+window.initGame = (React, assetsUrl) => {
+  const { useState, useEffect, useRef, Suspense, useMemo } = React;
+  const { useLoader, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
+  const MoleModel = React.memo(function MoleModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-
+    
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
@@ -16,116 +16,172 @@ window.initMatchingCardGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, isMatched, onFlip }) {
-    const cardRef = useRef();
-    const [cardY, setCardY] = useState(-1);
+  function Mole({ position, isActive, onWhack }) {
+    const moleRef = useRef();
+    const [moleY, setMoleY] = useState(-1);
 
     useEffect(() => {
-      if (cardRef.current) {
-        const targetY = isActive ? 0 : -1;
-        setCardY(targetY);
-        cardRef.current.position.y = targetY;
+      if (moleRef.current) {
+        moleRef.current.position.y = isActive ? 0 : -1;
       }
     }, [isActive]);
 
     return React.createElement(
       'group',
-      {
-        ref: cardRef,
+      { 
+        ref: moleRef,
         position: position,
-        onClick: onFlip,
-        style: { opacity: isMatched ? 0.5 : 1 }
+        onClick: onWhack
       },
-      React.createElement(CardModel, {
-        url: `${assetsUrl}/card.glb`,
-        scale: [1.5, 1.5, 1.5],
-        position: [0, cardY, 0]
+      React.createElement(MoleModel, { 
+        url: `${assetsUrl}/mole.glb`,
+        scale: [3, 3, 3],
+        position: [0, -0.5, 0]
       })
     );
   }
 
-  function MatchingCardGame() {
-    const [cards, setCards] = useState([]);
-    const [flippedCards, setFlippedCards] = useState([]);
+  const HammerModel = React.memo(function HammerModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
+    const gltf = useLoader(GLTFLoader, url);
+    const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
+    
+    useEffect(() => {
+      copiedScene.scale.set(...scale);
+      copiedScene.position.set(...position);
+      copiedScene.rotation.set(...rotation);
+    }, [copiedScene, scale, position, rotation]);
+
+    return React.createElement('primitive', { object: copiedScene });
+  });
+
+  function Hammer() {
+    const hammerRef = useRef();
+    const { camera, mouse } = useThree();
+    const [isHitting, setIsHitting] = useState(false);
+    const hitStartTime = useRef(0);
+
+    useEffect(() => {
+      if (hammerRef.current) {
+        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+        vector.unproject(camera);
+        const dir = vector.sub(camera.position).normalize();
+        const distance = -camera.position.z / dir.z;
+        const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+        hammerRef.current.position.copy(pos);
+
+        // Hitting animation
+        if (isHitting) {
+          const elapsedTime = performance.now() - hitStartTime.current;
+          if (elapsedTime < 200) {
+            hammerRef.current.rotation.x = Math.PI / 2 * Math.sin(elapsedTime * Math.PI / 200);
+          } else {
+            setIsHitting(false);
+            hammerRef.current.rotation.x = 0;
+          }
+        }
+      }
+    }, [camera, mouse, isHitting, hitStartTime]);
+
+    const handleClick = () => {
+      setIsHitting(true);
+      hitStartTime.current = performance.now();
+    };
+
+    return React.createElement(
+      'group',
+      { ref: hammerRef, onClick: handleClick },
+      React.createElement(HammerModel, { 
+        url: `${assetsUrl}/hammer.glb`,
+        scale: [20, 20, 20],
+        position: [0, 0, -2],
+        rotation: [-Math.PI / 2, 0, 0]
+      })
+    );
+  }
+
+  function Camera() {
+    const { camera } = useThree();
+    
+    useEffect(() => {
+      camera.position.set(0, 10, 15);
+      camera.lookAt(0, 0, 0);
+    }, [camera]);
+
+    return null;
+  }
+
+  function WhackAMole3D() {
+    const [moles, setMoles] = useState(Array(9).fill(false));
     const [score, setScore] = useState(0);
 
     useEffect(() => {
-      // Initialize cards
-      const cardData = Array(18)
-        .fill()
-        .map((_, index) => ({
-          id: index,
-          isActive: false,
-          isMatched: false
-        }));
+      const popUpMole = () => {
+        setMoles(prevMoles => {
+          const newMoles = [...prevMoles];
+          const inactiveIndices = newMoles.reduce((acc, mole, index) => !mole ? [...acc, index] : acc, []);
+          if (inactiveIndices.length > 0) {
+            const randomIndex = inactiveIndices[Math.floor(Math.random() * inactiveIndices.length)];
+            newMoles[randomIndex] = true;
+          }
+          return newMoles;
+        });
+      };
 
-      // Shuffle cards
-      for (let i = cardData.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [cardData[i], cardData[j]] = [cardData[j], cardData[i]];
-      }
+      const popDownMole = () => {
+        setMoles(prevMoles => {
+          const newMoles = [...prevMoles];
+          const activeIndices = newMoles.reduce((acc, mole, index) => mole ? [...acc, index] : acc, []);
+          if (activeIndices.length > 0) {
+            const randomIndex = activeIndices[Math.floor(Math.random() * activeIndices.length)];
+            newMoles[randomIndex] = false;
+          }
+          return newMoles;
+        });
+      };
 
-      setCards(cardData);
+      const popUpInterval = setInterval(popUpMole, 1000);
+      const popDownInterval = setInterval(popDownMole, 2000);
+
+      return () => {
+        clearInterval(popUpInterval);
+        clearInterval(popDownInterval);
+      };
     }, []);
 
-    const flipCard = (index) => {
-      setCards((prevCards) => {
-        const newCards = [...prevCards];
-        newCards[index].isActive = true;
-        return newCards;
-      });
-
-      setFlippedCards((prevFlippedCards) => [...prevFlippedCards, index]);
-
-      if (flippedCards.length === 1 && cards[flippedCards[0]].id !== cards[index].id) {
-        setTimeout(() => {
-          setCards((prevCards) => {
-            const newCards = [...prevCards];
-            newCards[flippedCards[0]].isActive = false;
-            newCards[index].isActive = false;
-            return newCards;
-          });
-          setFlippedCards([]);
-        }, 1000);
-      }
-
-      if (flippedCards.length === 1 && cards[flippedCards[0]].id === cards[index].id) {
-        setTimeout(() => {
-          setCards((prevCards) => {
-            const newCards = [...prevCards];
-            newCards[flippedCards[0]].isMatched = true;
-            newCards[index].isMatched = true;
-            return newCards;
-          });
-          setFlippedCards([]);
-          setScore((prevScore) => prevScore + 1);
-        }, 500);
+    const whackMole = (index) => {
+      if (moles[index]) {
+        setScore(prevScore => prevScore + 1);
+        setMoles(prevMoles => {
+          const newMoles = [...prevMoles];
+          newMoles[index] = false;
+          return newMoles;
+        });
       }
     };
 
     return React.createElement(
       React.Fragment,
       null,
+      React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
-      cards.map((card, index) =>
-        React.createElement(Card, {
+      moles.map((isActive, index) => 
+        React.createElement(Mole, {
           key: index,
           position: [
-            (index % 6 - 2.5) * 3,
+            (index % 3 - 1) * 4,
             0,
-            (Math.floor(index / 6) - 1.5) * 3
+            (Math.floor(index / 3) - 1) * 4
           ],
-          isActive: card.isActive,
-          isMatched: card.isMatched,
-          onFlip: () => flipCard(index)
+          isActive: isActive,
+          onWhack: () => whackMole(index)
         })
       ),
-      React.createElement('div', { style: { position: 'absolute', top: '10px', left: '10px' } }, `Score: ${score}`)
+      React.createElement(Hammer)
     );
   }
 
-  return MatchingCardGame;
+  return WhackAMole3D;
 };
 
-console.log('Matching Card game script loaded');
+console.log('3D Whack-a-Mole game script loaded');
