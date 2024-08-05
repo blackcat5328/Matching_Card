@@ -4,7 +4,6 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  // Card Model component - renders a 3D model of a card
   const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
@@ -18,8 +17,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  // Card component - represents a single card in the game
-  function Card({ position, cardNumber, isFlipped, onCardClick }) {
+  function Card({ position, cardNumber, isFlipped, isMatched, onCardClick }) {
     const cardRef = useRef();
     const [flipAngle, setFlipAngle] = useState(0);
 
@@ -39,13 +37,13 @@ window.initGame = (React, assetsUrl) => {
         onClick: onCardClick,
       },
       React.createElement(CardModel, {
-        url: `${assetsUrl}/card_back.glb`, // Replace with your card back model
+        url: `${assetsUrl}/card_back.glb`,
         scale: [1, 1, 1],
         position: [0, 0, 0],
         rotation: [0, 0, 0],
       }),
       React.createElement(CardModel, {
-        url: `${assetsUrl}/card_${cardNumber}.glb`, // Replace with your card front model
+        url: `${assetsUrl}/card_${cardNumber}.glb`,
         scale: [1, 1, 1],
         position: [0, 0, 0],
         rotation: [0, Math.PI, 0],
@@ -53,7 +51,6 @@ window.initGame = (React, assetsUrl) => {
     );
   }
 
-  // Camera component - sets up the camera position and orientation
   function Camera() {
     const { camera } = useThree();
 
@@ -65,7 +62,6 @@ window.initGame = (React, assetsUrl) => {
     return null;
   }
 
-  // MatchingCardGame component - main game logic
   function MatchingCardGame() {
     const [cards, setCards] = useState([]);
     const [flippedCards, setFlippedCards] = useState([]);
@@ -172,6 +168,7 @@ window.initGame = (React, assetsUrl) => {
           position: cardPositions[index],
           cardNumber: card.number,
           isFlipped: card.isFlipped,
+          isMatched: card.isMatched,
           onCardClick: () => handleCardClick(index),
         })
       ),
