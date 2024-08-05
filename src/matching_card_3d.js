@@ -4,10 +4,10 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
-    const gltf = useLoader(GLTFLoader, url);
+  const CardModel = React.memo(function CardModel({ cardId, scale = [1, 1, 1], position = [0, 0, 0] }) {
+    const gltf = useLoader(GLTFLoader, `${assetsUrl}/card_${cardId}.glb`);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-    
+
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
@@ -15,33 +15,6 @@ window.initGame = (React, assetsUrl) => {
 
     return React.createElement('primitive', { object: copiedScene });
   });
-
-  function Card({ position, isFlipped, onFlip, cardIndex }) {
-    const cardRef = useRef();
-    const [cardY, setCardY] = useState(-1);
-
-    useFrame((state, delta) => {
-      if (cardRef.current) {
-        const targetY = isFlipped ? 0 : -1;
-        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
-        cardRef.current.position.y = cardY;
-      }
-    });
-
-    return React.createElement(
-      'group',
-      { 
-        ref: cardRef,
-        position: position,
-        onClick: () => onFlip(cardIndex)
-      },
-      React.createElement(CardModel, { 
-        url: `${assetsUrl}/card_back.glb`,
-        scale: [2, 2, 2],
-        position: [0, -0.5, 0]
-      })
-    );
-  }
 
   function MatchingCardGame() {
     const [cards, setCards] = useState(Array(18).fill(false));
@@ -51,12 +24,12 @@ window.initGame = (React, assetsUrl) => {
     useEffect(() => {
       const initializeCards = () => {
         let initialCards = [];
-        for (let i = 0; i < 9; i++) {
+        for (let i = 1; i <= 9; i++) {
           initialCards.push(i);
           initialCards.push(i);
         }
         initialCards = shuffleArray(initialCards);
-        setCards(Array(18).fill(false).map((card, index) => ({ id: initialCards[index], flipped: false })));
+        setCards(Array(18).fill(false).map((card, index) => ({ id: initialCards[index], flipped: false }));
       };
 
       initializeCards();
@@ -109,6 +82,33 @@ window.initGame = (React, assetsUrl) => {
       )
     );
   }
+
+  const Card = ({ position, isFlipped, onFlip, cardIndex }) => {
+    const cardRef = useRef();
+    const [cardY, setCardY] = useState(-1);
+
+    useFrame((state, delta) => {
+      if (cardRef.current) {
+        const targetY = isFlipped ? 0 : -1;
+        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
+        cardRef.current.position.y = cardY;
+      }
+    });
+
+    return React.createElement(
+      'group',
+      { 
+        ref: cardRef,
+        position: position,
+        onClick: () => onFlip(cardIndex)
+      },
+      React.createElement(CardModel, { 
+        cardId: cards[cardIndex].id,
+        scale: [2, 2, 2],
+        position: [0, -0.5, 0]
+      })
+    );
+  };
 
   return MatchingCardGame;
 };
