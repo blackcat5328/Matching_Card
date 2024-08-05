@@ -16,9 +16,10 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, onFlip, cardIndex, cardSetIndex, isMatched, model }) {
+  function Card({ position, isActive, onFlip, cardIndex, cardSetIndex, isMatched, model, onCardRemoved }) {
     const cardRef = useRef();
     const [cardY, setCardY] = useState(isActive ? 0 : -1); // Initialize cardY based on isActive
+    const [isCardRemoved, setIsCardRemoved] = useState(false);
 
     useFrame((state, delta) => {
       if (cardRef.current) {
@@ -29,13 +30,22 @@ window.initGame = (React, assetsUrl) => {
     });
 
     const handleClick = () => {
-      if (!isMatched && cardY === -1) { // Check if the card is not matched and not flipped
+      if (!isMatched && !isCardRemoved && cardY === -1) { // Check if the card is not matched and not flipped
         setCardY(0); // Flip the card up
         onFlip(cardIndex, cardSetIndex);
       }
     };
 
-    return React.createElement(
+    useEffect(() => {
+      if (isMatched) {
+        setTimeout(() => {
+          setIsCardRemoved(true);
+          onCardRemoved();
+        }, 1000);
+      }
+    }, [isMatched, onCardRemoved]);
+
+    return isCardRemoved ? null : React.createElement(
       'group',
       { 
         ref: cardRef,
@@ -67,6 +77,7 @@ window.initGame = (React, assetsUrl) => {
     const [score, setScore] = useState(0);
     const [matchedCards, setMatchedCards] = useState([]); // Initialize as an empty array
     const [levelPassed, setLevelPassed] = useState(false);
+    const [removedCards, setRemovedCards] = useState(0);
 
     useEffect(() => {
       const initialCards = Array(9).fill(0).flatMap((_, setIndex) => {
@@ -98,7 +109,7 @@ window.initGame = (React, assetsUrl) => {
             setFlippedCards([]);
 
             // Check if all cards are matched
-            if (matchedCards && matchedCards.length === 9) { // Check if matchedCards is defined
+            if (matchedCards.length === 9 - removedCards) { // Check if all cards are matched
               setLevelPassed(true);
             }
           } else {
@@ -110,6 +121,10 @@ window.initGame = (React, assetsUrl) => {
           return [...prevFlippedCards, { setIndex: cardSetIndex, cardIndex }];
         }
       });
+    };
+
+    const handleCardRemoved = () => {
+      setRemovedCards(prevRemovedCards => prevRemovedCards + 1);
     };
 
     return React.createElement(
@@ -133,7 +148,8 @@ window.initGame = (React, assetsUrl) => {
           isMatched: matchedCards.some(
             matchedCard => matchedCard.setIndex === card.setIndex && matchedCard.cardIndex === card.cardIndex
           ),
-          model: card.model 
+          model: card.model,
+          onCardRemoved: handleCardRemoved
         })
       ),
       levelPassed && React.createElement('h1', null, 'Level Passed!')
