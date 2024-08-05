@@ -25,22 +25,6 @@ window.initGame = (React, assetsUrl) => {
     });
   }
 
-  function Background() {
-    const texture = useLoader(THREE.TextureLoader, `${assetsUrl}/background.jpg`); // Path to your background image
-    const planeRef = useRef();
-
-    useEffect(() => {
-      if (planeRef.current) {
-        planeRef.current.rotation.x = -Math.PI / 2; // Rotate to lay flat
-      }
-    }, []);
-
-    return React.createElement('mesh', { ref: planeRef, position: [0, -1, 0] },
-      React.createElement('planeBufferGeometry', { args: [50, 50] }), // Adjust size as needed
-      React.createElement('meshStandardMaterial', { map: texture })
-    );
-  }
-
   function Card({ index, url, isRevealed, onReveal, position }) {
     const handleClick = () => {
       if (!isRevealed) {
@@ -142,7 +126,6 @@ window.initGame = (React, assetsUrl) => {
       React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
-      React.createElement(Background), // Add the background here
       React.createElement(TableModel), // Add the table model
       allPairsFound 
         ? React.createElement(RotatingModel) 
