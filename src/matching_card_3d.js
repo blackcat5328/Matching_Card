@@ -89,9 +89,9 @@ window.initGame = (React, assetsUrl) => {
 
     const cardSpacing = 3; // Adjust spacing as needed
     const cardPositions = cards.map((_, index) => [
-      (index % 5) * cardSpacing,  // X position
-      0,                          // Y position
-      Math.floor(index / 5) * -cardSpacing // Z position for rows
+      index * cardSpacing,      // X position for horizontal layout
+      0,                        // Y position remains constant
+      0                         // Z position remains constant
     ]);
 
     return React.createElement(
