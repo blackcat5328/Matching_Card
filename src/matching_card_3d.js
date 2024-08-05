@@ -20,8 +20,8 @@ window.initGame = (React, assetsUrl) => {
     const tableUrl = `${assetsUrl}/table.glb`; // Path to your table model
     return React.createElement(CardModel, {
       url: tableUrl,
-      scale: [20, 10, 5], // Adjust scale as needed
-      position: [-10, -5.5, -5] // Adjust position to place it correctly
+      scale: [20, 1, 10], // Adjust scale as needed
+      position: [0, -0.5, 0] // Centered on the Y-axis
     });
   }
 
@@ -113,9 +113,9 @@ window.initGame = (React, assetsUrl) => {
 
     const cardSpacing = 2.5; // Adjust spacing as needed
     const cardPositions = cards.map((_, index) => [
-      (index % 5) * cardSpacing,  // X position
-      0.1,                        // Y position above the table
-      Math.floor(index / 5) * -cardSpacing // Z position for rows
+      (index % 5) * cardSpacing - (2.5 * 2), // Center the cards
+      0.1, // Position above the table
+      Math.floor(index / 5) * -cardSpacing // Position in rows
     ]);
 
     const allPairsFound = pairsFound.length === totalPairs;
