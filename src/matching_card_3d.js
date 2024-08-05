@@ -175,7 +175,7 @@ window.initGame = (React, assetsUrl) => {
           onCardClick: () => handleCardClick(index),
         })
       ),
-      levelPassed && React.createElement('div', { style: { position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '3em' } }, 'Level Passed!'),
+      levelPassed && React.createElement('text', { position: [0, 2, 0], fontSize: 3, color: 'white' }, 'Level Passed!'),
     );
   }
 
