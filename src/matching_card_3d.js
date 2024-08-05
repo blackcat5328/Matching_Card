@@ -84,14 +84,16 @@ window.initGame = (React, assetsUrl) => {
     const flipCard = (cardIndex, cardSetIndex) => {
       setFlippedCards(prevFlippedCards => {
         if (prevFlippedCards.length === 2) {
+          // Access setIndex from the card object
+          const firstFlippedCard = prevFlippedCards[0];
           if (
-            prevFlippedCards[0].setIndex === cardSetIndex &&
-            prevFlippedCards[0].cardIndex === cardIndex
+            firstFlippedCard.setIndex === cardSetIndex &&
+            firstFlippedCard.cardIndex === cardIndex
           ) {
             setScore(prevScore => prevScore + 1);
             setMatchedCards(prevMatchedCards => [
               ...prevMatchedCards,
-              { setIndex, cardIndex }
+              { setIndex: cardSetIndex, cardIndex }
             ]);
             setFlippedCards([]);
           } else {
@@ -100,7 +102,7 @@ window.initGame = (React, assetsUrl) => {
             }, 1000);
           }
         } else {
-          return [...prevFlippedCards, { setIndex, cardIndex }];
+          return [...prevFlippedCards, { setIndex: cardSetIndex, cardIndex }];
         }
       });
     };
