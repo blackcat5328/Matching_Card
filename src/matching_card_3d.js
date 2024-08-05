@@ -1,6 +1,3 @@
-javascript
-
-複製
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, Suspense, useMemo } = React;
   const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
