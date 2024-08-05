@@ -20,7 +20,7 @@ window.initGame = (React, assetsUrl) => {
     const tableUrl = `${assetsUrl}/table.glb`; // Path to your table model
     return React.createElement(CardModel, {
       url: tableUrl,
-      scale: [20, 5, 10], // Adjust scale as needed
+      scale: [23, 5, 13], // Adjust scale as needed
       position: [0, -3, 0] // Centered on the Y-axis
     });
   }
