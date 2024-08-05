@@ -38,7 +38,7 @@ window.initGame = (React, assetsUrl) => {
       },
       React.createElement(CardModel, { 
         url: `${assetsUrl}/card.glb`,
-        scale: [1, 1, 1],
+        scale: [2, 2, 2],
         position: [0, -0.5, 0]
       })
     );
@@ -57,52 +57,49 @@ window.initGame = (React, assetsUrl) => {
 
   function MatchingCardGame() {
     const [cards, setCards] = useState(Array(18).fill(false));
-    const [score, setScore] = useState(0);
     const [flippedCards, setFlippedCards] = useState([]);
+    const [score, setScore] = useState(0);
 
     useEffect(() => {
       const shuffleCards = () => {
-        const newCards = Array(18).fill(false).map((_, index) => index < 9 ? index : index - 9);
-        for (let i = newCards.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [newCards[i], newCards[j]] = [newCards[j], newCards[i]];
-        }
-        setCards(newCards);
+        const shuffledCards = [...Array(9).keys()].reduce((acc, _, index) => {
+          acc.push(index, index);
+          return acc;
+        }, []);
+        shuffledCards.sort(() => Math.random() - 0.5);
+        setCards(shuffledCards.map(index => true));
       };
 
       shuffleCards();
     }, []);
 
     const flipCard = (index) => {
-      if (!cards[index]) {
-        setCards(prevCards => {
-          const newCards = [...prevCards];
-          newCards[index] = true;
-          return newCards;
-        });
-        setFlippedCards(prevCards => [...prevCards, index]);
+      if (!cards[index]) return;
 
-        if (flippedCards.length === 1 && cards[flippedCards[0]] === index) {
-          setScore(prevScore => prevScore + 1);
-          setCards(prevCards => {
-            const newCards = [...prevCards];
-            newCards[index] = false;
-            newCards[flippedCards[0]] = false;
-            return newCards;
-          });
-          setFlippedCards([]);
-        } else if (flippedCards.length === 1) {
-          setTimeout(() => {
+      setCards(prevCards => {
+        const newCards = [...prevCards];
+        newCards[index] = false;
+        return newCards;
+      });
+
+      setFlippedCards(prevFlipped => {
+        if (prevFlipped.length === 2) {
+          if (prevFlipped[0] === index) {
+            setScore(prevScore => prevScore + 1);
+            return [index];
+          } else {
             setCards(prevCards => {
               const newCards = [...prevCards];
-              newCards[index] = false;
-              newCards[flippedCards[0]] = false;
+              newCards[prevFlipped[0]] = true;
+              newCards[index] = true;
               return newCards;
             });
-            setFlippedCards([]);
-          }, 1000);
+            return [];
+          }
+        } else {
+          return [...prevFlipped, index];
         }
-      }
+      });
     };
 
     return React.createElement(
@@ -111,13 +108,13 @@ window.initGame = (React, assetsUrl) => {
       React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
-      cards.map((isActive, index) =>
+      cards.map((isActive, index) => 
         React.createElement(Card, {
           key: index,
           position: [
-            (index % 6 - 2.5) * 2,
+            (index % 6 - 2.5) * 3,
             0,
-            (Math.floor(index / 6) - 1.5) * 2
+            (Math.floor(index / 6) - 1.5) * 3
           ],
           isActive: isActive,
           onFlip: () => flipCard(index)
