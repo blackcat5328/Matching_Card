@@ -1,6 +1,6 @@
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, useMemo } = React;
-  const { useLoader, useThree, useFrame } = window.ReactThreeFiber; // Added useFrame import
+  const { useLoader, useThree, useFrame } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
@@ -16,6 +16,15 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
+  function TableModel() {
+    const tableUrl = `${assetsUrl}/table.glb`; // Path to your table model
+    return React.createElement(CardModel, {
+      url: tableUrl,
+      scale: [3, 1, 3], // Adjust scale as needed
+      position: [0, -0.5, 0] // Adjust position to place it correctly
+    });
+  }
+
   function Card({ index, url, isRevealed, onReveal, position }) {
     const handleClick = () => {
       if (!isRevealed) {
@@ -28,7 +37,7 @@ window.initGame = (React, assetsUrl) => {
       { onClick: handleClick, position },
       React.createElement(CardModel, { 
         url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
-        scale: [2, 2, 2],
+        scale: [0.5, 1, 0.75], // Adjust scale for cards
         position: [0, 0, 0]
       })
     );
@@ -38,7 +47,7 @@ window.initGame = (React, assetsUrl) => {
     const modelRef = useRef();
     useFrame(() => {
       if (modelRef.current) {
-        modelRef.current.rotation.y += 0.01; // Rotate the model
+        modelRef.current.rotation.y += 0.01;
       }
     });
 
@@ -65,7 +74,7 @@ window.initGame = (React, assetsUrl) => {
     const [cards, setCards] = useState([]);
     const [revealedCards, setRevealedCards] = useState([]);
     const [pairsFound, setPairsFound] = useState([]);
-    const totalPairs = 5; // 5 pairs
+    const totalPairs = 5;
 
     useEffect(() => {
       const cardUrls = [];
@@ -102,14 +111,13 @@ window.initGame = (React, assetsUrl) => {
       setRevealedCards([]);
     };
 
-    const cardSpacing = 3; // Adjust spacing as needed
+    const cardSpacing = 2.5; // Adjust spacing as needed
     const cardPositions = cards.map((_, index) => [
       (index % 5) * cardSpacing,  // X position
-      0,                          // Y position
+      0.1,                        // Y position above the table
       Math.floor(index / 5) * -cardSpacing // Z position for rows
     ]);
 
-    // Check if all pairs are found
     const allPairsFound = pairsFound.length === totalPairs;
 
     return React.createElement(
@@ -118,6 +126,7 @@ window.initGame = (React, assetsUrl) => {
       React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
+      React.createElement(TableModel), // Add the table model
       allPairsFound 
         ? React.createElement(RotatingModel) 
         : cards.map((url, index) =>
@@ -127,7 +136,7 @@ window.initGame = (React, assetsUrl) => {
             url: url,
             isRevealed: revealedCards.includes(index),
             onReveal: revealCard,
-            position: cardPositions[index] // Pass the calculated position
+            position: cardPositions[index]
           })
         )
     );
