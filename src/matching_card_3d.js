@@ -111,6 +111,6 @@ window.initGame = (React, assetsUrl) => {
   };
 
   return MatchingCardGame;
-};
+}
 
 console.log('3D Matching Card game script loaded');
