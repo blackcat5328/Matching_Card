@@ -67,6 +67,7 @@ window.initGame = (React, assetsUrl) => {
     const [flippedCards, setFlippedCards] = useState([]);
     const [score, setScore] = useState(0);
     const [matchedCards, setMatchedCards] = useState([]);
+    const [levelPassed, setLevelPassed] = useState(false);
 
     useEffect(() => {
       const initialCards = Array(9).fill(0).flatMap((_, setIndex) => {
@@ -84,7 +85,6 @@ window.initGame = (React, assetsUrl) => {
     const flipCard = (cardIndex, cardSetIndex) => {
       setFlippedCards(prevFlippedCards => {
         if (prevFlippedCards.length === 2) {
-          // Access setIndex from the card object
           const firstFlippedCard = prevFlippedCards[0];
           if (
             firstFlippedCard.setIndex === cardSetIndex &&
@@ -96,6 +96,11 @@ window.initGame = (React, assetsUrl) => {
               { setIndex: cardSetIndex, cardIndex }
             ]);
             setFlippedCards([]);
+
+            // Check if all cards are matched
+            if (matchedCards.length === 9) {
+              setLevelPassed(true);
+            }
           } else {
             setTimeout(() => {
               setFlippedCards([]);
@@ -129,7 +134,8 @@ window.initGame = (React, assetsUrl) => {
             matchedCard => matchedCard.setIndex === card.setIndex && matchedCard.cardIndex === card.cardIndex
           )
         })
-      )
+      ),
+      levelPassed && React.createElement('h1', null, 'Level Passed!')
     );
   }
 
