@@ -16,7 +16,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ index, url, isRevealed, onReveal }) {
+  function Card({ index, url, isRevealed, onReveal, position }) {
     const cardRef = useRef();
     const handleClick = () => {
       if (!isRevealed) {
@@ -26,7 +26,7 @@ window.initGame = (React, assetsUrl) => {
 
     return React.createElement(
       'group',
-      { ref: cardRef, onClick: handleClick },
+      { ref: cardRef, onClick: handleClick, position },
       React.createElement(CardModel, { 
         url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
         scale: [2, 2, 2],
@@ -87,6 +87,13 @@ window.initGame = (React, assetsUrl) => {
       setRevealedCards([]);
     };
 
+    const cardSpacing = 3; // Adjust spacing as needed
+    const cardPositions = cards.map((_, index) => [
+      (index % 5) * cardSpacing,  // X position
+      0,                          // Y position
+      Math.floor(index / 5) * -cardSpacing // Z position for rows
+    ]);
+
     return React.createElement(
       React.Fragment,
       null,
@@ -99,7 +106,8 @@ window.initGame = (React, assetsUrl) => {
           index: index,
           url: url,
           isRevealed: revealedCards.includes(index),
-          onReveal: revealCard
+          onReveal: revealCard,
+          position: cardPositions[index] // Pass the calculated position
         })
       ),
       pairsFound === totalPairs && React.createElement('text', { position: [0, 2, 0], children: 'Level Complete!' })
