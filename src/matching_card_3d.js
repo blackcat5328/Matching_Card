@@ -16,7 +16,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, onFlip, cardIndex, cardSetIndex, isMatched }) {
+  function Card({ position, isActive, onFlip, cardIndex, cardSetIndex, isMatched, model }) {
     const cardRef = useRef();
     const [cardY, setCardY] = useState(-1);
     const [isFlipped, setIsFlipped] = useState(false);
@@ -44,7 +44,7 @@ window.initGame = (React, assetsUrl) => {
         onClick: handleClick
       },
       React.createElement(CardModel, { 
-        url: `${assetsUrl}/card.glb`, 
+        url: `${assetsUrl}/${model}`, 
         scale: [2, 2, 2],
         position: [0, -0.5, 0] 
       })
@@ -75,7 +75,8 @@ window.initGame = (React, assetsUrl) => {
           setIndex,
           cardIndex,
           isActive: true,
-          isMatched: false
+          isMatched: false,
+          model: `card_${setIndex + 1}.gltf` // Add model name
         }));
         return cardSet;
       });
@@ -132,7 +133,8 @@ window.initGame = (React, assetsUrl) => {
           cardSetIndex: card.setIndex,
           isMatched: matchedCards.some(
             matchedCard => matchedCard.setIndex === card.setIndex && matchedCard.cardIndex === card.cardIndex
-          )
+          ),
+          model: card.model // Pass the model name
         })
       ),
       levelPassed && React.createElement('h1', null, 'Level Passed!')
