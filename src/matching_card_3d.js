@@ -87,12 +87,20 @@ window.initGame = (React, assetsUrl) => {
       setRevealedCards([]);
     };
 
-    const cardSpacing = 3; // Adjust spacing as needed
-    const cardPositions = cards.map((_, index) => [
-      index * cardSpacing,      // X position for horizontal layout
-      0,                        // Y position remains constant
-      0                         // Z position remains constant
-    ]);
+    const rows = 2; // Number of rows
+    const cols = 5; // Number of columns
+    const cardSpacingX = 3; // Horizontal spacing
+    const cardSpacingY = 3; // Vertical spacing
+
+    const cardPositions = cards.map((_, index) => {
+      const col = index % cols; // Column index
+      const row = Math.floor(index / cols); // Row index
+      return [
+        col * cardSpacingX,      // X position
+        row * cardSpacingY,      // Y position
+        0                         // Z position
+      ];
+    });
 
     return React.createElement(
       React.Fragment,
