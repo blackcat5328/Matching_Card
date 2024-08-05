@@ -17,7 +17,6 @@ window.initGame = (React, assetsUrl) => {
   });
 
   function Card({ index, url, isRevealed, onReveal, position }) {
-    const cardRef = useRef();
     const handleClick = () => {
       if (!isRevealed) {
         onReveal(index);
@@ -26,13 +25,29 @@ window.initGame = (React, assetsUrl) => {
 
     return React.createElement(
       'group',
-      { ref: cardRef, onClick: handleClick, position },
+      { onClick: handleClick, position },
       React.createElement(CardModel, { 
         url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
         scale: [2, 2, 2],
         position: [0, 0, 0]
       })
     );
+  }
+
+  function RotatingModel() {
+    const modelRef = useRef();
+    useFrame(() => {
+      if (modelRef.current) {
+        modelRef.current.rotation.y += 0.01; // Rotate the model
+      }
+    });
+
+    return React.createElement(CardModel, {
+      url: `${assetsUrl}/finish.glb`,
+      scale: [1, 1, 1],
+      position: [0, 0, 0],
+      ref: modelRef
+    });
   }
 
   function Camera() {
@@ -94,22 +109,27 @@ window.initGame = (React, assetsUrl) => {
       Math.floor(index / 5) * -cardSpacing // Z position for rows
     ]);
 
+    // Check if all pairs are found
+    const allPairsFound = pairsFound.length === totalPairs;
+
     return React.createElement(
       React.Fragment,
       null,
       React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
-      cards.map((url, index) =>
-        !pairsFound.includes(url) && React.createElement(Card, {
-          key: index,
-          index: index,
-          url: url,
-          isRevealed: revealedCards.includes(index),
-          onReveal: revealCard,
-          position: cardPositions[index] // Pass the calculated position
-        })
-      )
+      allPairsFound 
+        ? React.createElement(RotatingModel) 
+        : cards.map((url, index) =>
+          !pairsFound.includes(url) && React.createElement(Card, {
+            key: index,
+            index: index,
+            url: url,
+            isRevealed: revealedCards.includes(index),
+            onReveal: revealCard,
+            position: cardPositions[index] // Pass the calculated position
+          })
+        )
     );
   }
 
