@@ -26,11 +26,11 @@ window.initGame = (React, assetsUrl) => {
   }
 
   function TextModel() {
-    const textUrl = `${assetsUrl}/matchk.glb`; // Path to your text model
+    const textUrl = `${assetsUrl}/matchk.glb`;
     return React.createElement(CardModel, {
       url: textUrl,
       scale: [5, 3, 5],
-      position: [0, 5, 5] // Position above the table
+      position: [0, 5, 5]
     });
   }
 
@@ -52,7 +52,7 @@ window.initGame = (React, assetsUrl) => {
     );
   }
 
-  function RotatingModel() {
+  function RotatingModel({ onClick }) {
     const modelRef = useRef();
     useFrame(() => {
       if (modelRef.current) {
@@ -64,7 +64,8 @@ window.initGame = (React, assetsUrl) => {
       url: `${assetsUrl}/finish.glb`,
       scale: [3, 3, 3],
       position: [0, 5, 0],
-      ref: modelRef
+      ref: modelRef,
+      onClick: onClick
     });
   }
 
@@ -85,13 +86,20 @@ window.initGame = (React, assetsUrl) => {
     const [pairsFound, setPairsFound] = useState([]);
     const totalPairs = 5;
 
-    useEffect(() => {
+    const resetGame = () => {
+      setCards([]);
+      setRevealedCards([]);
+      setPairsFound([]);
       const cardUrls = [];
       for (let i = 1; i <= totalPairs; i++) {
         cardUrls.push(`${assetsUrl}/card_${i}.glb`);
         cardUrls.push(`${assetsUrl}/card_${i}.glb`);
       }
       setCards(shuffleArray(cardUrls));
+    };
+
+    useEffect(() => {
+      resetGame();
     }, [assetsUrl]);
 
     const shuffleArray = (array) => {
@@ -136,9 +144,9 @@ window.initGame = (React, assetsUrl) => {
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
       React.createElement(TableModel), 
-      React.createElement(TextModel), // Add the text model
+      React.createElement(TextModel), 
       allPairsFound 
-        ? React.createElement(RotatingModel) 
+        ? React.createElement(RotatingModel, { onClick: resetGame }) 
         : cards.map((url, index) =>
           !pairsFound.includes(url) && React.createElement(Card, {
             key: index,
