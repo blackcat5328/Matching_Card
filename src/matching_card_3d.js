@@ -1,6 +1,6 @@
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, useMemo } = React;
-  const { useLoader, useThree } = window.ReactThreeFiber;
+  const { useLoader, useThree, useFrame } = window.ReactThreeFiber; // Added useFrame import
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
