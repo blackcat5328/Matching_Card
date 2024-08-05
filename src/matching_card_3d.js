@@ -3,12 +3,11 @@ window.initGame = (React, assetsUrl) => {
   const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
-  import { useSpring, animated } from 'react-spring';
 
   const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-
+    
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
@@ -17,117 +16,112 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  const Card = React.memo(function Card({ position, isActive, onFlip }) {
+  function Card({ position, isActive, onFlip, cardIndex }) {
     const cardRef = useRef();
-    const [flipped, setFlipped] = useState(false);
+    const [cardY, setCardY] = useState(-1);
 
-    const { rotation, scale } = useSpring({
-      rotation: isActive ? [0, Math.PI, 0] : [0, 0, 0],
-      scale: isActive ? [3, 3, 3] : [3, 3, 1],
-      config: { mass: 1, tension: 170, friction: 26 },
-    });
-
-    useFrame(() => {
+    useFrame((state, delta) => {
       if (cardRef.current) {
-        cardRef.current.rotation.y = rotation.get();
-        cardRef.current.scale.set(...scale.get());
+        const targetY = isActive ? 0 : -1;
+        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
+        cardRef.current.position.y = cardY;
       }
     });
-
-    const handleClick = () => {
-      setFlipped(!flipped);
-      onFlip();
-    };
 
     return React.createElement(
-      animated.group,
-      {
+      'group',
+      { 
         ref: cardRef,
         position: position,
-        onClick: handleClick,
+        onClick: onFlip
       },
-      React.createElement(CardModel, {
+      React.createElement(CardModel, { 
         url: `${assetsUrl}/card.glb`,
-        scale: [1, 1, 1],
-        position: [0, 0, 0],
+        scale: [2, 2, 2],
+        position: [0, -0.5, 0]
       })
     );
-  });
+  }
 
-  const Scene = React.memo(function Scene() {
-    const { camera, scene } = useThree();
-    const [cards, setCards] = useState([]);
-    const [activeCards, setActiveCards] = useState([]);
+  function MatchingCardGame() {
+    const [cards, setCards] = useState(Array(18).fill(false));
+    const [flippedCards, setFlippedCards] = useState([]);
+    const [score, setScore] = useState(0);
 
     useEffect(() => {
-      const newCards = Array(12)
-        .fill(0)
-        .map((_, i) => ({
-          id: i,
-          position: [
-            (i % 4) * 3 - 4.5,
-            Math.floor(i / 4) * 3 - 1.5,
-            0,
-          ],
-          isActive: false,
-        }));
-      setCards(newCards);
+      const shuffleCards = () => {
+        const cardIndexes = Array.from({ length: 18 }, (_, i) => i);
+        for (let i = cardIndexes.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [cardIndexes[i], cardIndexes[j]] = [cardIndexes[j], cardIndexes[i]];
+        }
+        setCards(cardIndexes.map(index => index < 9));
+      };
+
+      shuffleCards();
     }, []);
 
-    const handleFlip = (id) => {
-      setCards((prevCards) =>
-        prevCards.map((card) =>
-          card.id === id ? { ...card, isActive: !card.isActive } : card
-        )
-      );
-      setActiveCards((prevActive) => {
-        if (prevActive.length === 2) {
-          return [id];
-        } else {
-          return [...prevActive, id];
-        }
-      });
-    };
+    const flipCard = (index) => {
+      if (!cards[index]) {
+        setCards(prevCards => {
+          const newCards = [...prevCards];
+          newCards[index] = true;
+          return newCards;
+        });
+        setFlippedCards(prevCards => [...prevCards, index]);
 
-    useEffect(() => {
-      if (activeCards.length === 2) {
-        const timer = setTimeout(() => {
-          setActiveCards([]);
-        }, 1000);
-        return () => clearTimeout(timer);
+        if (flippedCards.length === 1 && cards[flippedCards[0]] === cards[index]) {
+          setScore(prevScore => prevScore + 1);
+          setFlippedCards([]);
+        } else if (flippedCards.length === 1) {
+          setTimeout(() => {
+            setCards(prevCards => {
+              const newCards = [...prevCards];
+              newCards[index] = false;
+              newCards[flippedCards[0]] = false;
+              return newCards;
+            });
+            setFlippedCards([]);
+          }, 1000);
+        }
       }
-    }, [activeCards]);
+    };
 
     return React.createElement(
       React.Fragment,
       null,
-      cards.map((card) =>
+      React.createElement(Camera),
+      React.createElement('ambientLight', { intensity: 0.5 }),
+      React.createElement('pointLight', { position: [10, 10, 10] }),
+      cards.map((isActive, index) => 
         React.createElement(Card, {
-          key: card.id,
-          position: card.position,
-          isActive: activeCards.includes(card.id),
-          onFlip: () => handleFlip(card.id),
+          key: index,
+          position: [
+            (index % 6 - 2.5) * 3,
+            0,
+            (Math.floor(index / 6) - 1.5) * 3
+          ],
+          isActive: isActive,
+          onFlip: () => flipCard(index),
+          cardIndex: index
         })
-      )
+      ),
+      React.createElement('div', { style: { position: 'absolute', top: '10px', left: '10px', color: 'white' } }, `Score: ${score}`)
     );
-  });
+  }
 
-  const App = () => {
-    const { gl, camera, scene } = useThree();
-
+  function Camera() {
+    const { camera } = useThree();
+    
     useEffect(() => {
-      camera.position.set(0, 0, 10);
+      camera.position.set(0, 10, 15);
       camera.lookAt(0, 0, 0);
     }, [camera]);
 
-    return React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(Suspense, { fallback: null }, React.createElement(Scene))
-    );
-  };
+    return null;
+  }
 
-  console.log('Matching Card game script loaded');
-
-  return App;
+  return MatchingCardGame;
 };
+
+console.log('Matching Card Game script loaded');
