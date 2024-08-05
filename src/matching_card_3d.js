@@ -54,82 +54,80 @@ window.initGame = (React, assetsUrl) => {
     );
   });
 
-  function MatchingCardGame() {
-    const [cards, setCards] = useState(Array(18).fill(false));
-    const [flippedCards, setFlippedCards] = useState([]);
-    const [score, setScore] = useState(0);
+  const Scene = React.memo(function Scene() {
+    const { camera, scene } = useThree();
+    const [cards, setCards] = useState([]);
+    const [activeCards, setActiveCards] = useState([]);
 
     useEffect(() => {
-      // Shuffle the cards
-      const shuffledCards = Array(18)
-        .fill()
-        .map((_, i) => i % 9)
-        .sort(() => Math.random() - 0.5);
-
-      setCards(shuffledCards.map(index => index));
+      const newCards = Array(12)
+        .fill(0)
+        .map((_, i) => ({
+          id: i,
+          position: [
+            (i % 4) * 3 - 4.5,
+            Math.floor(i / 4) * 3 - 1.5,
+            0,
+          ],
+          isActive: false,
+        }));
+      setCards(newCards);
     }, []);
 
-    const flipCard = (index) => {
-      if (!cards[index]) {
-        setCards(prevCards => {
-          const newCards = [...prevCards];
-          newCards[index] = true;
-          return newCards;
-        });
-        setFlippedCards(prevFlippedCards => [...prevFlippedCards, index]);
-
-        if (flippedCards.length === 1 && cards[flippedCards[0]] === index) {
-          // Match found
-          setScore(prevScore => prevScore + 1);
-          setFlippedCards([]);
-        } else if (flippedCards.length === 2) {
-          // No match, flip back the cards
-          setTimeout(() => {
-            setCards(prevCards => {
-              const newCards = [...prevCards];
-              newCards[flippedCards[0]] = false;
-              newCards[flippedCards[1]] = false;
-              return newCards;
-            });
-            setFlippedCards([]);
-          }, 1000);
+    const handleFlip = (id) => {
+      setCards((prevCards) =>
+        prevCards.map((card) =>
+          card.id === id ? { ...card, isActive: !card.isActive } : card
+        )
+      );
+      setActiveCards((prevActive) => {
+        if (prevActive.length === 2) {
+          return [id];
+        } else {
+          return [...prevActive, id];
         }
-      }
+      });
     };
+
+    useEffect(() => {
+      if (activeCards.length === 2) {
+        const timer = setTimeout(() => {
+          setActiveCards([]);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    }, [activeCards]);
 
     return React.createElement(
       React.Fragment,
       null,
-      React.createElement(Camera),
-      React.createElement('ambientLight', { intensity: 0.5 }),
-      React.createElement('pointLight', { position: [10, 10, 10] }),
-      cards.map((isActive, index) => 
+      cards.map((card) =>
         React.createElement(Card, {
-          key: index,
-          position: [
-            (index % 6 - 2.5) * 4,
-            0,
-            (Math.floor(index / 6) - 1.5) * 4
-          ],
-          isActive: isActive,
-          onFlip: () => flipCard(index)
+          key: card.id,
+          position: card.position,
+          isActive: activeCards.includes(card.id),
+          onFlip: () => handleFlip(card.id),
         })
       )
     );
-  }
+  });
 
-  function Camera() {
-    const { camera } = useThree();
-    
+  const App = () => {
+    const { gl, camera, scene } = useThree();
+
     useEffect(() => {
-      camera.position.set(0, 10, 15);
+      camera.position.set(0, 0, 10);
       camera.lookAt(0, 0, 0);
     }, [camera]);
 
-    return null;
-  }
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(Suspense, { fallback: null }, React.createElement(Scene))
+    );
+  };
 
-  return MatchingCardGame;
+  console.log('Matching Card game script loaded');
+
+  return App;
 };
-
-console.log('Matching Card game script loaded');
