@@ -66,7 +66,7 @@ window.initGame = (React, assetsUrl) => {
     const [cards, setCards] = useState([]);
     const [flippedCards, setFlippedCards] = useState([]);
     const [score, setScore] = useState(0);
-    const [matchedCards, setMatchedCards] = useState([]);
+    const [matchedCards, setMatchedCards] = useState([]); // Initialize as an empty array
     const [levelPassed, setLevelPassed] = useState(false);
 
     useEffect(() => {
@@ -76,7 +76,7 @@ window.initGame = (React, assetsUrl) => {
           cardIndex,
           isActive: true,
           isMatched: false,
-          model: `card_${setIndex + 1}.glb` // Changed to .glb
+          model: `card_${setIndex + 1}.glb` 
         }));
         return cardSet;
       });
@@ -99,7 +99,7 @@ window.initGame = (React, assetsUrl) => {
             setFlippedCards([]);
 
             // Check if all cards are matched
-            if (matchedCards.length === 9) {
+            if (matchedCards && matchedCards.length === 9) { // Check if matchedCards is defined
               setLevelPassed(true);
             }
           } else {
@@ -134,7 +134,7 @@ window.initGame = (React, assetsUrl) => {
           isMatched: matchedCards.some(
             matchedCard => matchedCard.setIndex === card.setIndex && matchedCard.cardIndex === card.cardIndex
           ),
-          model: card.model // Pass the model name
+          model: card.model 
         })
       ),
       levelPassed && React.createElement('h1', null, 'Level Passed!')
