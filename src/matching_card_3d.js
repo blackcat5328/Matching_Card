@@ -53,8 +53,8 @@ window.initGame = (React, assetsUrl) => {
 
     return React.createElement(CardModel, {
       url: `${assetsUrl}/finish.glb`,
-      scale: [1, 1, 1],
-      position: [0, 0, 0],
+      scale: [3, 3, 3],
+      position: [0, 5, 0],
       ref: modelRef
     });
   }
