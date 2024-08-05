@@ -21,7 +21,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement(CardModel, {
       url: tableUrl,
       scale: [23, 5, 13], // Adjust scale as needed
-      position: [0, -3, 0] // Centered on the Y-axis
+      position: [0, -2.5, 0] // Centered on the Y-axis
     });
   }
 
