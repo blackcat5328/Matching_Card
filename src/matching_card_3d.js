@@ -18,8 +18,7 @@ window.initGame = (React, assetsUrl) => {
 
   function Card({ position, isActive, onFlip, cardIndex, cardSetIndex, isMatched, model }) {
     const cardRef = useRef();
-    const [cardY, setCardY] = useState(0); // Initialize cardY to 0
-    const [isFlipped, setIsFlipped] = useState(false);
+    const [cardY, setCardY] = useState(isActive ? 0 : -1); // Initialize cardY based on isActive
 
     useFrame((state, delta) => {
       if (cardRef.current) {
@@ -30,8 +29,8 @@ window.initGame = (React, assetsUrl) => {
     });
 
     const handleClick = () => {
-      if (!isMatched && !isFlipped) {
-        setIsFlipped(true);
+      if (!isMatched && cardY === -1) { // Check if the card is not matched and not flipped
+        setCardY(0); // Flip the card up
         onFlip(cardIndex, cardSetIndex);
       }
     };
