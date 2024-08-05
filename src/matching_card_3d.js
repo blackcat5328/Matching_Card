@@ -1,13 +1,13 @@
-window.initMatchingCards = (React, assetsUrl) => {
-  const { useState, useEffect, useRef, Suspense, useMemo } = React;
-  const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
+window.initMatchingCardGame = (React, assetsUrl) => {
+  const { useState, useEffect, useMemo } = React;
+  const { useLoader } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
   const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-
+    
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
@@ -16,119 +16,98 @@ window.initMatchingCards = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, cardId, onCardClick }) {
-    const cardRef = useRef();
-    const [cardY, setCardY] = useState(-1);
-
-    useFrame((state, delta) => {
-      if (cardRef.current) {
-        const targetY = isActive ? 0 : -1;
-        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
-        cardRef.current.position.y = cardY;
-      }
-    });
-
+  function Card({ position, isActive, isMatched, onCardClick }) {
     return React.createElement(
       'group',
       {
-        ref: cardRef,
         position: position,
-        onClick: () => onCardClick(cardId)
+        onClick: onCardClick
       },
       React.createElement(CardModel, {
         url: `${assetsUrl}/card.glb`,
-        scale: [2, 2, 2],
-        position: [0, -0.5, 0]
+        scale: [2, 2, 0.5],
+        position: [0, 0, isActive || isMatched ? 0 : -0.2]
       })
     );
   }
 
-  function Camera() {
-    const { camera } = useThree();
-
-    useEffect(() => {
-      camera.position.set(0, 10, 15);
-      camera.lookAt(0, 0, 0);
-    }, [camera]);
-
-    return null;
-  }
-
-  function MatchingCards() {
-    const [cards, setCards] = useState(Array(18).fill(false));
+  function MatchingCardGame() {
+    const [cards, setCards] = useState([
+      { id: 1, isActive: false, isMatched: false },
+      { id: 1, isActive: false, isMatched: false },
+      { id: 2, isActive: false, isMatched: false },
+      { id: 2, isActive: false, isMatched: false },
+      { id: 3, isActive: false, isMatched: false },
+      { id: 3, isActive: false, isMatched: false },
+      { id: 4, isActive: false, isMatched: false },
+      { id: 4, isActive: false, isMatched: false },
+      { id: 5, isActive: false, isMatched: false },
+      { id: 5, isActive: false, isMatched: false },
+      { id: 6, isActive: false, isMatched: false },
+      { id: 6, isActive: false, isMatched: false },
+      { id: 7, isActive: false, isMatched: false },
+      { id: 7, isActive: false, isMatched: false },
+      { id: 8, isActive: false, isMatched: false },
+      { id: 8, isActive: false, isMatched: false },
+      { id: 9, isActive: false, isMatched: false },
+      { id: 9, isActive: false, isMatched: false },
+    ]);
+    const [firstCardIndex, setFirstCardIndex] = useState(-1);
+    const [secondCardIndex, setSecondCardIndex] = useState(-1);
     const [score, setScore] = useState(0);
-    const [activeCard1, setActiveCard1] = useState(null);
-    const [activeCard2, setActiveCard2] = useState(null);
 
-    useEffect(() => {
-      const initializeCards = () => {
-        const newCards = [];
-        for (let i = 0; i < 9; i++) {
-          newCards.push(i, i);
+    const handleCardClick = (index) => {
+      if (cards[index].isActive || cards[index].isMatched) return;
+      
+      setCards((prevCards) => {
+        const newCards = [...prevCards];
+        newCards[index].isActive = true;
+        
+        if (firstCardIndex === -1) {
+          setFirstCardIndex(index);
+        } else if (secondCardIndex === -1) {
+          setSecondCardIndex(index);
+          
+          if (newCards[firstCardIndex].id === newCards[index].id) {
+            newCards[firstCardIndex].isMatched = true;
+            newCards[index].isMatched = true;
+            setScore((prevScore) => prevScore + 1);
+          } else {
+            setTimeout(() => {
+              newCards[firstCardIndex].isActive = false;
+              newCards[index].isActive = false;
+            }, 1000);
+          }
+          
+          setFirstCardIndex(-1);
+          setSecondCardIndex(-1);
         }
-        newCards.sort(() => Math.random() - 0.5);
-        setCards(newCards.map(id => ({ id, isActive: false })));
-      };
-
-      initializeCards();
-    }, []);
-
-    useEffect(() => {
-      if (activeCard1 !== null && activeCard2 !== null) {
-        if (cards[activeCard1].id === cards[activeCard2].id) {
-          setScore(prevScore => prevScore + 1);
-          setCards(prevCards => {
-            const newCards = [...prevCards];
-            newCards[activeCard1].isActive = true;
-            newCards[activeCard2].isActive = true;
-            return newCards;
-          });
-        } else {
-          setTimeout(() => {
-            setCards(prevCards => {
-              const newCards = [...prevCards];
-              newCards[activeCard1].isActive = false;
-              newCards[activeCard2].isActive = false;
-              return newCards;
-            });
-          }, 1000);
-        }
-        setActiveCard1(null);
-        setActiveCard2(null);
-      }
-    }, [activeCard1, activeCard2, cards]);
-
-    const handleCardClick = (cardIndex) => {
-      if (activeCard1 === null) {
-        setActiveCard1(cardIndex);
-      } else if (activeCard2 === null) {
-        setActiveCard2(cardIndex);
-      }
+        
+        return newCards;
+      });
     };
 
     return React.createElement(
       React.Fragment,
       null,
-      React.createElement(Camera),
-      React.createElement('ambientLight', { intensity: 0.5 }),
-      React.createElement('pointLight', { position: [10, 10, 10] }),
-      cards.map((card, index) =>
+      cards.map((card, index) => (
         React.createElement(Card, {
           key: index,
           position: [
             (index % 6 - 2.5) * 3,
-            0,
-            (Math.floor(index / 6) - 1.5) * 3
+            (Math.floor(index / 6) - 1.5) * 3,
+            0
           ],
           isActive: card.isActive,
-          cardId: index,
-          onCardClick: handleCardClick
+          isMatched: card.isMatched,
+          onCardClick: () => handleCardClick(index)
         })
-      )
+      )),
+      React.createElement('div', { style: { position: 'absolute', top: '10px', left: '10px' } }, `Score: ${score}`)
     );
   }
 
-  return MatchingCards;
+  return MatchingCardGame;
 };
 
-console.log('Matching Cards game script loaded');
+console.log('Matching Card game script loaded');
