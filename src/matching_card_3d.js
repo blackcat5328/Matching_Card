@@ -37,7 +37,7 @@ window.initGame = (React, assetsUrl) => {
       { onClick: handleClick, position },
       React.createElement(CardModel, { 
         url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
-        scale: [0.5, 1, 0.75], // Adjust scale for cards
+        scale: [2, 2, 2], // Adjust scale for cards
         position: [0, 0, 0]
       })
     );
