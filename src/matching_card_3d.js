@@ -1,13 +1,17 @@
+javascript
+
+複製
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, Suspense, useMemo } = React;
   const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
+  const { useSpring, animated } = window.ReactSpring;
 
   const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-    
+
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
@@ -16,32 +20,42 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, onFlip }) {
+  const Card = React.memo(function Card({ position, isActive, onFlip }) {
     const cardRef = useRef();
-    const [cardY, setCardY] = useState(-1);
+    const [flipped, setFlipped] = useState(false);
 
-    useFrame((state, delta) => {
+    const { rotation, scale } = useSpring({
+      rotation: isActive ? [0, Math.PI, 0] : [0, 0, 0],
+      scale: isActive ? [3, 3, 3] : [3, 3, 1],
+      config: { mass: 1, tension: 170, friction: 26 },
+    });
+
+    useFrame(() => {
       if (cardRef.current) {
-        const targetY = isActive ? 0 : -1;
-        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
-        cardRef.current.position.y = cardY;
+        cardRef.current.rotation.y = rotation.get();
+        cardRef.current.scale.set(...scale.get());
       }
     });
 
+    const handleClick = () => {
+      setFlipped(!flipped);
+      onFlip();
+    };
+
     return React.createElement(
-      'group',
-      { 
+      animated.group,
+      {
         ref: cardRef,
         position: position,
-        onClick: onFlip
+        onClick: handleClick,
       },
-      React.createElement(CardModel, { 
+      React.createElement(CardModel, {
         url: `${assetsUrl}/card.glb`,
-        scale: [3, 3, 3],
-        position: [0, -0.5, 0]
+        scale: [1, 1, 1],
+        position: [0, 0, 0],
       })
     );
-  }
+  });
 
   function MatchingCardGame() {
     const [cards, setCards] = useState(Array(18).fill(false));
