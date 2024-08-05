@@ -4,26 +4,25 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
+  const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
     
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
-      copiedScene.rotation.set(...rotation);
-    }, [copiedScene, scale, position, rotation]);
+    }, [copiedScene, scale, position]);
 
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, onFlip, modelUrl }) {
+  function Card({ position, isMatched, isRevealed, onCardClick }) {
     const cardRef = useRef();
     const [cardY, setCardY] = useState(-1);
 
     useFrame((state, delta) => {
       if (cardRef.current) {
-        const targetY = isActive ? 0 : -1;
+        const targetY = isRevealed ? 0 : -1;
         setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
         cardRef.current.position.y = cardY;
       }
@@ -34,13 +33,84 @@ window.initGame = (React, assetsUrl) => {
       { 
         ref: cardRef,
         position: position,
-        onClick: onFlip
+        onClick: onCardClick
       },
       React.createElement(CardModel, { 
-        url: modelUrl,
-        scale: [1, 1, 1],
+        url: `${assetsUrl}/${isMatched ? 'matched_card' : 'card'}.glb`,
+        scale: [2, 2, 2],
         position: [0, -0.5, 0]
       })
+    );
+  }
+
+  function MatchingCardGame() {
+    const [cards, setCards] = useState(Array(18).fill({ isMatched: false, isRevealed: false }));
+    const [selectedCards, setSelectedCards] = useState([]);
+    const [score, setScore] = useState(0);
+
+    useEffect(() => {
+      const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
+      setCards(shuffledCards.map((card, index) => ({
+        isMatched: false,
+        isRevealed: false,
+        id: index
+      })));
+    }, []);
+
+    const handleCardClick = (index) => {
+      if (!cards[index].isMatched && !cards[index].isRevealed) {
+        setCards(prevCards => {
+          const newCards = [...prevCards];
+          newCards[index].isRevealed = true;
+          return newCards;
+        });
+        setSelectedCards(prevSelectedCards => [...prevSelectedCards, index]);
+
+        if (selectedCards.length === 1) {
+          if (cards[selectedCards[0]].id === cards[index].id) {
+            setCards(prevCards => {
+              const newCards = [...prevCards];
+              newCards[selectedCards[0]].isMatched = true;
+              newCards[index].isMatched = true;
+              return newCards;
+            });
+            setScore(prevScore => prevScore + 1);
+            setSelectedCards([]);
+          } else {
+            setTimeout(() => {
+              setCards(prevCards => {
+                const newCards = [...prevCards];
+                newCards[selectedCards[0]].isRevealed = false;
+                newCards[index].isRevealed = false;
+                return newCards;
+              });
+              setSelectedCards([]);
+            }, 1000);
+          }
+        }
+      }
+    };
+
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(Camera),
+      React.createElement('ambientLight', { intensity: 0.5 }),
+      React.createElement('pointLight', { position: [10, 10, 10] }),
+      cards.map((card, index) =>
+        React.createElement(Card, {
+          key: index,
+          position: [
+            (index % 6 - 2.5) * 2,
+            0,
+            (Math.floor(index / 6) - 1.5) * 2
+          ],
+          isMatched: card.isMatched,
+          isRevealed: card.isRevealed,
+          onCardClick: () => handleCardClick(index)
+        })
+      ),
+      React.createElement('div', { style: { position: 'absolute', top: '10px', left: '10px', color: 'white' } }, `Score: ${score}`)
     );
   }
 
@@ -53,86 +123,6 @@ window.initGame = (React, assetsUrl) => {
     }, [camera]);
 
     return null;
-  }
-
-  function MatchingCardGame() {
-    const [cards, setCards] = useState(Array(18).fill(false));
-    const [score, setScore] = useState(0);
-    const [flippedCards, setFlippedCards] = useState([]);
-
-    const cardModelUrls = useMemo(() => {
-      const urls = [];
-      for (let i = 0; i < 18; i++) {
-        urls.push(`${assetsUrl}/card_${i}.glb`);
-      }
-      return urls;
-    }, [assetsUrl]);
-
-    useEffect(() => {
-      const shuffleCards = () => {
-        const newCards = Array(18).fill(false).map((_, index) => index < 9 ? index : index - 9);
-        for (let i = newCards.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [newCards[i], newCards[j]] = [newCards[j], newCards[i]];
-        }
-        setCards(newCards);
-      };
-
-      shuffleCards();
-    }, []);
-
-    const flipCard = (index) => {
-      if (!cards[index]) {
-        setCards(prevCards => {
-          const newCards = [...prevCards];
-          newCards[index] = true;
-          return newCards;
-        });
-        setFlippedCards(prevCards => [...prevCards, index]);
-
-        if (flippedCards.length === 1 && cards[flippedCards[0]] === index) {
-          setScore(prevScore => prevScore + 1);
-          setCards(prevCards => {
-            const newCards = [...prevCards];
-            newCards[index] = false;
-            newCards[flippedCards[0]] = false;
-            return newCards;
-          });
-          setFlippedCards([]);
-        } else if (flippedCards.length === 1) {
-          setTimeout(() => {
-            setCards(prevCards => {
-              const newCards = [...prevCards];
-              newCards[index] = false;
-              newCards[flippedCards[0]] = false;
-              return newCards;
-            });
-            setFlippedCards([]);
-          }, 1000);
-        }
-      }
-    };
-
-    return React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(Camera),
-      React.createElement('ambientLight', { intensity: 0.5 }),
-      React.createElement('pointLight', { position: [10, 10, 10] }),
-      cardModelUrls.map((url, index) =>
-        React.createElement(Card, {
-          key: index,
-          position: [
-            (index % 6 - 2.5) * 2,
-            0,
-            (Math.floor(index / 6) - 1.5) * 2
-          ],
-          isActive: cards[index],
-          onFlip: () => flipCard(index),
-          modelUrl: url
-        })
-      )
-    );
   }
 
   return MatchingCardGame;
