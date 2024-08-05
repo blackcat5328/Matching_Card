@@ -17,11 +17,20 @@ window.initGame = (React, assetsUrl) => {
   });
 
   function TableModel() {
-    const tableUrl = `${assetsUrl}/table.glb`; // Path to your table model
+    const tableUrl = `${assetsUrl}/table.glb`; 
     return React.createElement(CardModel, {
       url: tableUrl,
-      scale: [23, 5, 13], // Adjust scale as needed
-      position: [0, -2.5, 0] // Centered on the Y-axis
+      scale: [23, 5, 13],
+      position: [0, -2.5, 0]
+    });
+  }
+
+  function TextModel() {
+    const textUrl = `${assetsUrl}/matchk.glb`; // Path to your text model
+    return React.createElement(CardModel, {
+      url: textUrl,
+      scale: [5, 3, 5],
+      position: [0, 10, 0] // Position above the table
     });
   }
 
@@ -37,7 +46,7 @@ window.initGame = (React, assetsUrl) => {
       { onClick: handleClick, position },
       React.createElement(CardModel, { 
         url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
-        scale: [2, 2, 2], // Adjust scale for cards
+        scale: [2, 2, 2],
         position: [0, 0, 0]
       })
     );
@@ -111,11 +120,11 @@ window.initGame = (React, assetsUrl) => {
       setRevealedCards([]);
     };
 
-    const cardSpacing = 2.5; // Adjust spacing as needed
+    const cardSpacing = 2.5;
     const cardPositions = cards.map((_, index) => [
-      (index % 5) * cardSpacing - (2.5 * 2), // Center the cards
-      0.1, // Position above the table
-      Math.floor(index / 5) * -cardSpacing // Position in rows
+      (index % 5) * cardSpacing - (2.5 * 2),
+      0.1,
+      Math.floor(index / 5) * -cardSpacing
     ]);
 
     const allPairsFound = pairsFound.length === totalPairs;
@@ -126,7 +135,8 @@ window.initGame = (React, assetsUrl) => {
       React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
-      React.createElement(TableModel), // Add the table model
+      React.createElement(TableModel), 
+      React.createElement(TextModel), // Add the text model
       allPairsFound 
         ? React.createElement(RotatingModel) 
         : cards.map((url, index) =>
