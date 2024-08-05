@@ -18,7 +18,7 @@ window.initGame = (React, assetsUrl) => {
 
   function Card({ position, isActive, onFlip, cardIndex, cardSetIndex, isMatched, model }) {
     const cardRef = useRef();
-    const [cardY, setCardY] = useState(-1);
+    const [cardY, setCardY] = useState(0); // Initialize cardY to 0
     const [isFlipped, setIsFlipped] = useState(false);
 
     useFrame((state, delta) => {
