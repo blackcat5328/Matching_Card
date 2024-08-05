@@ -158,13 +158,7 @@ window.initGame = (React, assetsUrl) => {
           cardIndex: index,
           onSelect: selectCard
         })
-      ),
-      // Display level and score
-      React.createElement('text', {
-        position: [0, 5, 0],
-        fontSize: 2,
-        color: 'white'
-      }, `Level: ${level} Score: ${score}`)
+      )
     );
   }
 
