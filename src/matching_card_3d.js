@@ -3,7 +3,7 @@ window.initGame = (React, assetsUrl) => {
   const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
-  const { useSpring, animated } = window.ReactSpring;
+  import { useSpring, animated } from 'react-spring';
 
   const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
