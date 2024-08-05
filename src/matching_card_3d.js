@@ -1,6 +1,6 @@
-window.initMatchingCardGame = (React, assetsUrl) => {
-  const { useState, useEffect, useMemo } = React;
-  const { useLoader } = window.ReactThreeFiber;
+window.initGame = (React, assetsUrl) => {
+  const { useState, useEffect, useRef, Suspense, useMemo } = React;
+  const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
@@ -16,95 +16,106 @@ window.initMatchingCardGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, isMatched, onCardClick }) {
+  function Card({ position, isActive, onFlip }) {
+    const cardRef = useRef();
+    const [cardY, setCardY] = useState(-1);
+
+    useFrame((state, delta) => {
+      if (cardRef.current) {
+        const targetY = isActive ? 0 : -1;
+        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
+        cardRef.current.position.y = cardY;
+      }
+    });
+
     return React.createElement(
       'group',
-      {
+      { 
+        ref: cardRef,
         position: position,
-        onClick: onCardClick
+        onClick: onFlip
       },
-      React.createElement(CardModel, {
+      React.createElement(CardModel, { 
         url: `${assetsUrl}/card.glb`,
-        scale: [2, 2, 0.5],
-        position: [0, 0, isActive || isMatched ? 0 : -0.2]
+        scale: [3, 3, 3],
+        position: [0, -0.5, 0]
       })
     );
   }
 
   function MatchingCardGame() {
-    const [cards, setCards] = useState([
-      { id: 1, isActive: false, isMatched: false },
-      { id: 1, isActive: false, isMatched: false },
-      { id: 2, isActive: false, isMatched: false },
-      { id: 2, isActive: false, isMatched: false },
-      { id: 3, isActive: false, isMatched: false },
-      { id: 3, isActive: false, isMatched: false },
-      { id: 4, isActive: false, isMatched: false },
-      { id: 4, isActive: false, isMatched: false },
-      { id: 5, isActive: false, isMatched: false },
-      { id: 5, isActive: false, isMatched: false },
-      { id: 6, isActive: false, isMatched: false },
-      { id: 6, isActive: false, isMatched: false },
-      { id: 7, isActive: false, isMatched: false },
-      { id: 7, isActive: false, isMatched: false },
-      { id: 8, isActive: false, isMatched: false },
-      { id: 8, isActive: false, isMatched: false },
-      { id: 9, isActive: false, isMatched: false },
-      { id: 9, isActive: false, isMatched: false },
-    ]);
-    const [firstCardIndex, setFirstCardIndex] = useState(-1);
-    const [secondCardIndex, setSecondCardIndex] = useState(-1);
+    const [cards, setCards] = useState(Array(18).fill(false));
+    const [flippedCards, setFlippedCards] = useState([]);
     const [score, setScore] = useState(0);
 
-    const handleCardClick = (index) => {
-      if (cards[index].isActive || cards[index].isMatched) return;
-      
-      setCards((prevCards) => {
-        const newCards = [...prevCards];
-        newCards[index].isActive = true;
-        
-        if (firstCardIndex === -1) {
-          setFirstCardIndex(index);
-        } else if (secondCardIndex === -1) {
-          setSecondCardIndex(index);
-          
-          if (newCards[firstCardIndex].id === newCards[index].id) {
-            newCards[firstCardIndex].isMatched = true;
-            newCards[index].isMatched = true;
-            setScore((prevScore) => prevScore + 1);
-          } else {
-            setTimeout(() => {
-              newCards[firstCardIndex].isActive = false;
-              newCards[index].isActive = false;
-            }, 1000);
-          }
-          
-          setFirstCardIndex(-1);
-          setSecondCardIndex(-1);
+    useEffect(() => {
+      // Shuffle the cards
+      const shuffledCards = Array(18)
+        .fill()
+        .map((_, i) => i % 9)
+        .sort(() => Math.random() - 0.5);
+
+      setCards(shuffledCards.map(index => index));
+    }, []);
+
+    const flipCard = (index) => {
+      if (!cards[index]) {
+        setCards(prevCards => {
+          const newCards = [...prevCards];
+          newCards[index] = true;
+          return newCards;
+        });
+        setFlippedCards(prevFlippedCards => [...prevFlippedCards, index]);
+
+        if (flippedCards.length === 1 && cards[flippedCards[0]] === index) {
+          // Match found
+          setScore(prevScore => prevScore + 1);
+          setFlippedCards([]);
+        } else if (flippedCards.length === 2) {
+          // No match, flip back the cards
+          setTimeout(() => {
+            setCards(prevCards => {
+              const newCards = [...prevCards];
+              newCards[flippedCards[0]] = false;
+              newCards[flippedCards[1]] = false;
+              return newCards;
+            });
+            setFlippedCards([]);
+          }, 1000);
         }
-        
-        return newCards;
-      });
+      }
     };
 
     return React.createElement(
       React.Fragment,
       null,
-      cards.map((card, index) => (
+      React.createElement(Camera),
+      React.createElement('ambientLight', { intensity: 0.5 }),
+      React.createElement('pointLight', { position: [10, 10, 10] }),
+      cards.map((isActive, index) => 
         React.createElement(Card, {
           key: index,
           position: [
-            (index % 6 - 2.5) * 3,
-            (Math.floor(index / 6) - 1.5) * 3,
-            0
+            (index % 6 - 2.5) * 4,
+            0,
+            (Math.floor(index / 6) - 1.5) * 4
           ],
-          isActive: card.isActive,
-          isMatched: card.isMatched,
-          onCardClick: () => handleCardClick(index)
+          isActive: isActive,
+          onFlip: () => flipCard(index)
         })
-      )),
-      React.createElement('div', { style: { position: 'absolute', top: '10px', left: '10px' } }, `Score: ${score}`)
+      )
     );
+  }
+
+  function Camera() {
+    const { camera } = useThree();
+    
+    useEffect(() => {
+      camera.position.set(0, 10, 15);
+      camera.lookAt(0, 0, 0);
+    }, [camera]);
+
+    return null;
   }
 
   return MatchingCardGame;
