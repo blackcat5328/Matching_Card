@@ -16,101 +16,38 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isMatched, isRevealed, onCardClick }) {
+  function Card({ position, isActive, onFlip, cardIndex, cardSetIndex, isMatched }) {
     const cardRef = useRef();
     const [cardY, setCardY] = useState(-1);
+    const [isFlipped, setIsFlipped] = useState(false);
 
     useFrame((state, delta) => {
       if (cardRef.current) {
-        const targetY = isRevealed ? 0 : -1;
+        const targetY = isActive ? 0 : -1;
         setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
         cardRef.current.position.y = cardY;
       }
     });
+
+    const handleClick = () => {
+      if (!isMatched && !isFlipped) {
+        setIsFlipped(true);
+        onFlip(cardIndex, cardSetIndex);
+      }
+    };
 
     return React.createElement(
       'group',
       { 
         ref: cardRef,
         position: position,
-        onClick: onCardClick
+        onClick: handleClick
       },
       React.createElement(CardModel, { 
-        url: `${assetsUrl}/${isMatched ? 'matched_card' : 'card'}.glb`,
+        url: `${assetsUrl}/card.glb`, 
         scale: [2, 2, 2],
-        position: [0, -0.5, 0]
+        position: [0, -0.5, 0] 
       })
-    );
-  }
-
-  function MatchingCardGame() {
-    const [cards, setCards] = useState(Array(18).fill({ isMatched: false, isRevealed: false }));
-    const [selectedCards, setSelectedCards] = useState([]);
-    const [score, setScore] = useState(0);
-
-    useEffect(() => {
-      const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
-      setCards(shuffledCards.map((card, index) => ({
-        isMatched: false,
-        isRevealed: false,
-        id: index
-      })));
-    }, []);
-
-    const handleCardClick = (index) => {
-      if (!cards[index].isMatched && !cards[index].isRevealed) {
-        setCards(prevCards => {
-          const newCards = [...prevCards];
-          newCards[index].isRevealed = true;
-          return newCards;
-        });
-        setSelectedCards(prevSelectedCards => [...prevSelectedCards, index]);
-
-        if (selectedCards.length === 1) {
-          if (cards[selectedCards[0]].id === cards[index].id) {
-            setCards(prevCards => {
-              const newCards = [...prevCards];
-              newCards[selectedCards[0]].isMatched = true;
-              newCards[index].isMatched = true;
-              return newCards;
-            });
-            setScore(prevScore => prevScore + 1);
-            setSelectedCards([]);
-          } else {
-            setTimeout(() => {
-              setCards(prevCards => {
-                const newCards = [...prevCards];
-                newCards[selectedCards[0]].isRevealed = false;
-                newCards[index].isRevealed = false;
-                return newCards;
-              });
-              setSelectedCards([]);
-            }, 1000);
-          }
-        }
-      }
-    };
-
-    return React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(Camera),
-      React.createElement('ambientLight', { intensity: 0.5 }),
-      React.createElement('pointLight', { position: [10, 10, 10] }),
-      cards.map((card, index) =>
-        React.createElement(Card, {
-          key: index,
-          position: [
-            (index % 6 - 2.5) * 2,
-            0,
-            (Math.floor(index / 6) - 1.5) * 2
-          ],
-          isMatched: card.isMatched,
-          isRevealed: card.isRevealed,
-          onCardClick: () => handleCardClick(index)
-        })
-      ),
-      React.createElement('div', { style: { position: 'absolute', top: '10px', left: '10px', color: 'white' } }, `Score: ${score}`)
     );
   }
 
@@ -123,6 +60,75 @@ window.initGame = (React, assetsUrl) => {
     }, [camera]);
 
     return null;
+  }
+
+  function MatchingCardGame() {
+    const [cards, setCards] = useState([]);
+    const [flippedCards, setFlippedCards] = useState([]);
+    const [score, setScore] = useState(0);
+    const [matchedCards, setMatchedCards] = useState([]);
+
+    useEffect(() => {
+      const initialCards = Array(9).fill(0).flatMap((_, setIndex) => {
+        const cardSet = Array(2).fill(0).map((_, cardIndex) => ({
+          setIndex,
+          cardIndex,
+          isActive: true,
+          isMatched: false
+        }));
+        return cardSet;
+      });
+      setCards(initialCards.sort(() => Math.random() - 0.5));
+    }, []);
+
+    const flipCard = (cardIndex, cardSetIndex) => {
+      setFlippedCards(prevFlippedCards => {
+        if (prevFlippedCards.length === 2) {
+          if (
+            prevFlippedCards[0].setIndex === cardSetIndex &&
+            prevFlippedCards[0].cardIndex === cardIndex
+          ) {
+            setScore(prevScore => prevScore + 1);
+            setMatchedCards(prevMatchedCards => [
+              ...prevMatchedCards,
+              { setIndex, cardIndex }
+            ]);
+            setFlippedCards([]);
+          } else {
+            setTimeout(() => {
+              setFlippedCards([]);
+            }, 1000);
+          }
+        } else {
+          return [...prevFlippedCards, { setIndex, cardIndex }];
+        }
+      });
+    };
+
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(Camera),
+      React.createElement('ambientLight', { intensity: 0.5 }),
+      React.createElement('pointLight', { position: [10, 10, 10] }),
+      cards.map((card, index) => 
+        React.createElement(Card, {
+          key: index,
+          position: [
+            (index % 6 - 2.5) * 3,
+            0,
+            (Math.floor(index / 6) - 1) * 3
+          ],
+          isActive: card.isActive,
+          onFlip: flipCard,
+          cardIndex: card.cardIndex,
+          cardSetIndex: card.setIndex,
+          isMatched: matchedCards.some(
+            matchedCard => matchedCard.setIndex === card.setIndex && matchedCard.cardIndex === card.cardIndex
+          )
+        })
+      )
+    );
   }
 
   return MatchingCardGame;
