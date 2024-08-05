@@ -49,7 +49,7 @@ window.initGame = (React, assetsUrl) => {
   function MatchingCardGame() {
     const [cards, setCards] = useState([]);
     const [revealedCards, setRevealedCards] = useState([]);
-    const [pairsFound, setPairsFound] = useState(0);
+    const [pairsFound, setPairsFound] = useState([]);
     const totalPairs = 5; // 5 pairs
 
     useEffect(() => {
@@ -82,7 +82,7 @@ window.initGame = (React, assetsUrl) => {
     const checkMatch = (revealed) => {
       const [first, second] = revealed;
       if (cards[first] === cards[second]) {
-        setPairsFound(prev => prev + 1);
+        setPairsFound(prev => [...prev, cards[first]]);
       }
       setRevealedCards([]);
     };
@@ -101,7 +101,7 @@ window.initGame = (React, assetsUrl) => {
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
       cards.map((url, index) =>
-        React.createElement(Card, {
+        !pairsFound.includes(url) && React.createElement(Card, {
           key: index,
           index: index,
           url: url,
