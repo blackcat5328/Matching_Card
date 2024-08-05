@@ -1,5 +1,5 @@
 window.initGame = (React, assetsUrl) => {
-  const { useState, useEffect, useRef, Suspense, useMemo } = React;
+  const { useState, useEffect, useRef, useMemo } = React;
   const { useLoader, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
@@ -109,8 +109,7 @@ window.initGame = (React, assetsUrl) => {
           onReveal: revealCard,
           position: cardPositions[index] // Pass the calculated position
         })
-      ),
-      pairsFound === totalPairs && React.createElement('text', { position: [0, 2, 0], children: 'Level Complete!' })
+      )
     );
   }
 
