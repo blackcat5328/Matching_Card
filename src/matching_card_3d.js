@@ -30,7 +30,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement(CardModel, {
       url: textUrl,
       scale: [5, 3, 5],
-      position: [0, 5, 5]
+      position: [5, 5, 0]
     });
   }
 
