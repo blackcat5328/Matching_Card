@@ -1,90 +1,67 @@
 window.initGame = (React, assetsUrl) => {
-  const { useState, useEffect, useRef, Suspense, useMemo } = React;
-  const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
+  const { useState, useEffect, useRef, useMemo } = React;
+  const { useFrame, useLoader } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
+  const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-
+    
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
-      copiedScene.rotation.set(...rotation);
-    }, [copiedScene, scale, position, rotation]);
+    }, [copiedScene, scale, position]);
 
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, cardNumber, isFlipped, isMatched, onCardClick }) {
+  function Card({ position, isFlipped, onFlip, cardIndex }) {
     const cardRef = useRef();
-    const [flipAngle, setFlipAngle] = useState(0);
+    const [cardY, setCardY] = useState(-1);
 
     useFrame((state, delta) => {
       if (cardRef.current) {
-        const targetAngle = isFlipped ? Math.PI : 0;
-        setFlipAngle(current => THREE.MathUtils.lerp(current, targetAngle, delta * 5));
-        cardRef.current.rotation.y = flipAngle;
+        const targetY = isFlipped ? 0 : -1;
+        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
+        cardRef.current.position.y = cardY;
       }
     });
 
     return React.createElement(
       'group',
-      {
+      { 
         ref: cardRef,
         position: position,
-        onClick: onCardClick,
+        onClick: () => onFlip(cardIndex)
       },
-      React.createElement(CardModel, {
+      React.createElement(CardModel, { 
         url: `${assetsUrl}/card_back.glb`,
-        scale: [1, 1, 1],
-        position: [0, 0, 0],
-        rotation: [0, 0, 0],
-      }),
-      React.createElement(CardModel, {
-        url: `${assetsUrl}/card_${cardNumber}.glb`,
-        scale: [1, 1, 1],
-        position: [0, 0, 0],
-        rotation: [0, Math.PI, 0],
-      }),
+        scale: [2, 2, 2],
+        position: [0, -0.5, 0]
+      })
     );
   }
 
-  function Camera() {
-    const { camera } = useThree();
-
-    useEffect(() => {
-      camera.position.set(0, 10, 15);
-      camera.lookAt(0, 0, 0);
-    }, [camera]);
-
-    return null;
-  }
-
   function MatchingCardGame() {
-    const [cards, setCards] = useState([]);
-    const [flippedCards, setFlippedCards] = useState([]);
+    const [cards, setCards] = useState(Array(18).fill(false));
+    const [selectedCard, setSelectedCard] = useState(null);
     const [score, setScore] = useState(0);
-    const [levelPassed, setLevelPassed] = useState(false);
-    const [cardPositions, setCardPositions] = useState([]);
 
     useEffect(() => {
-      // Initialize cards with random numbers (9 pairs)
-      const cardNumbers = Array.from({ length: 9 }, (_, i) => i + 1).flatMap(number => [number, number]);
-      const shuffledNumbers = shuffleArray(cardNumbers);
+      const initializeCards = () => {
+        let initialCards = [];
+        for (let i = 0; i < 9; i++) {
+          initialCards.push(i);
+          initialCards.push(i);
+        }
+        initialCards = shuffleArray(initialCards);
+        setCards(Array(18).fill(false).map((card, index) => ({ id: initialCards[index], flipped: false })));
+      };
 
-      // Set initial card states and positions
-      setCards(shuffledNumbers.map((number, index) => ({
-        id: index,
-        number: number,
-        isFlipped: false,
-        isMatched: false,
-      })));
-      setCardPositions(generateCardPositions(18)); // Generate 18 card positions
+      initializeCards();
     }, []);
 
-    // Shuffle array function
     const shuffleArray = (array) => {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -93,86 +70,43 @@ window.initGame = (React, assetsUrl) => {
       return array;
     };
 
-    // Generate card positions
-    const generateCardPositions = (numCards) => {
-      const positions = [];
-      const gridSize = 4; // Adjust for card spacing
-      for (let i = 0; i < numCards; i++) {
-        const x = (i % 3 - 1) * gridSize;
-        const z = (Math.floor(i / 3) - 1) * gridSize;
-        positions.push([x, 0, z]);
-      }
-      return positions;
-    };
+    const flipCard = (index) => {
+      if (cards[index].flipped) return;
 
-    // Handle card click
-    const handleCardClick = (cardId) => {
-      const card = cards[cardId];
-      if (!card.isFlipped && !card.isMatched) {
-        setFlippedCards(prevFlippedCards => [...prevFlippedCards, cardId]);
-        setCards(prevCards => {
-          const newCards = [...prevCards];
-          newCards[cardId].isFlipped = true;
-          return newCards;
-        });
-      }
-    };
-
-    // Check for match
-    useEffect(() => {
-      if (flippedCards.length === 2) {
-        const card1 = cards[flippedCards[0]];
-        const card2 = cards[flippedCards[1]];
-
-        if (card1.number === card2.number) {
-          // Match!
+      if (selectedCard === null) {
+        setSelectedCard(index);
+      } else {
+        if (cards[selectedCard].id === cards[index].id) {
           setScore(prevScore => prevScore + 1);
           setCards(prevCards => {
             const newCards = [...prevCards];
-            newCards[flippedCards[0]].isMatched = true;
-            newCards[flippedCards[1]].isMatched = true;
+            newCards[selectedCard].flipped = true;
+            newCards[index].flipped = true;
             return newCards;
           });
-          setFlippedCards([]);
-        } else {
-          // No match, flip back down after a delay
-          setTimeout(() => {
-            setCards(prevCards => {
-              const newCards = [...prevCards];
-              newCards[flippedCards[0]].isFlipped = false;
-              newCards[flippedCards[1]].isFlipped = false;
-              return newCards;
-            });
-            setFlippedCards([]);
-          }, 1000); // Adjust delay as needed
         }
+        setSelectedCard(null);
       }
-    }, [flippedCards, cards]);
-
-    // Check for level completion
-    useEffect(() => {
-      if (cards.every(card => card.isMatched)) {
-        setLevelPassed(true);
-      }
-    }, [cards]);
+    };
 
     return React.createElement(
       React.Fragment,
       null,
-      React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
-      cards.map((card, index) =>
+      cards.map((card, index) => 
         React.createElement(Card, {
           key: index,
-          position: cardPositions[index],
-          cardNumber: card.number,
-          isFlipped: card.isFlipped,
-          isMatched: card.isMatched,
-          onCardClick: () => handleCardClick(index),
+          position: [
+            (index % 6 - 2.5) * 4,
+            0,
+            (Math.floor(index / 6) - 1) * 4
+          ],
+          isFlipped: card.flipped,
+          onFlip: (cardIndex) => flipCard(cardIndex),
+          cardIndex: index
         })
-      ),
-      levelPassed && React.createElement('text', { position: [0, 2, 0], fontSize: 3, color: 'white' }, 'Level Passed!'),
+      )
     );
   }
 
