@@ -105,12 +105,21 @@ window.initGame = (React, assetsUrl) => {
       }
     };
 
+    const displayScore = () => {
+      return React.createElement(
+        'div',
+        { style: { position: 'absolute', top: '20px', left: '20px', color: 'white', fontSize: '24px' } },
+        `Score: ${score}`
+      );
+    };
+
     return React.createElement(
       React.Fragment,
       null,
       React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
+      displayScore(),
       cards.map((isActive, index) =>
         React.createElement(Card, {
           key: index,
