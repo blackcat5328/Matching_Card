@@ -6,15 +6,17 @@ window.initGame = (React, assetsUrl) => {
 
   const CardModel = React.memo(function CardModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
-    const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
-    
-    useEffect(() => {
-      copiedScene.scale.set(...scale);
-      copiedScene.position.set(...position);
-      copiedScene.rotation.set(...rotation);
-    }, [copiedScene, scale, position, rotation]);
+    const cardRef = useRef();
 
-    return React.createElement('primitive', { object: copiedScene });
+    useEffect(() => {
+      if (cardRef.current) {
+        cardRef.current.scale.set(...scale);
+        cardRef.current.position.set(...position);
+        cardRef.current.rotation.set(...rotation);
+      }
+    }, [cardRef, scale, position, rotation]);
+
+    return React.createElement('primitive', { object: gltf.scene, ref: cardRef });
   });
 
   function Card({ position, isActive, onFlip }) {
