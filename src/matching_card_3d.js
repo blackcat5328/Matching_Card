@@ -1,6 +1,7 @@
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, Suspense, useMemo } = React;
   const { useFrame, useLoader, useThree } = window.ReactThreeFiber;
+  const { useSpring, animated } = window.ReactSpring;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
@@ -16,14 +17,13 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  function Card({ position, isActive, onFlip, cardIndex }) {
+  const AnimatedCard = animated(function AnimatedCard({ position, isActive, onFlip, cardIndex }) {
     const cardRef = useRef();
-    const [cardY, setCardY] = useState(-1);
+    const [{ cardY }, api] = useSpring(() => ({ cardY: isActive ? 0 : -1 }));
 
     useFrame((state, delta) => {
       if (cardRef.current) {
-        const targetY = isActive ? 0 : -1;
-        setCardY(current => THREE.MathUtils.lerp(current, targetY, delta * 5));
+        api.start({ cardY: isActive ? 0 : -1, config: { duration: 500 } });
         cardRef.current.position.y = cardY;
       }
     });
@@ -41,7 +41,7 @@ window.initGame = (React, assetsUrl) => {
         position: [0, -0.5, 0]
       })
     );
-  }
+  });
 
   function MatchingCardGame() {
     const [cards, setCards] = useState(Array(18).fill(false));
@@ -94,7 +94,7 @@ window.initGame = (React, assetsUrl) => {
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
       cards.map((isActive, index) => 
-        React.createElement(Card, {
+        React.createElement(AnimatedCard, {
           key: index,
           position: [
             (index % 6 - 2.5) * 3,
