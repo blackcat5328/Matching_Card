@@ -39,7 +39,7 @@ window.initGame = (React, assetsUrl) => {
     const { camera } = useThree();
     
     useEffect(() => {
-      camera.position.set(0, 10, 15);
+      camera.position.set(0, 5, 10);
       camera.lookAt(0, 0, 0);
     }, [camera]);
 
@@ -49,7 +49,7 @@ window.initGame = (React, assetsUrl) => {
   function MatchingCardGame() {
     const [cards, setCards] = useState([]);
     const [revealedCards, setRevealedCards] = useState([]);
-    const [pairsFound, setPairsFound] = useState([]);
+    const [pairsFound, setPairsFound] = useState(0);
     const totalPairs = 5; // 5 pairs
 
     useEffect(() => {
@@ -82,25 +82,17 @@ window.initGame = (React, assetsUrl) => {
     const checkMatch = (revealed) => {
       const [first, second] = revealed;
       if (cards[first] === cards[second]) {
-        setPairsFound(prev => [...prev, cards[first]]);
+        setPairsFound(prev => prev + 1);
       }
       setRevealedCards([]);
     };
 
-    const rows = 2; // Number of rows
-    const cols = 5; // Number of columns
-    const cardSpacingX = 3; // Horizontal spacing
-    const cardSpacingY = 3; // Vertical spacing
-
-    const cardPositions = cards.map((_, index) => {
-      const col = index % cols; // Column index
-      const row = Math.floor(index / cols); // Row index
-      return [
-        col * cardSpacingX,      // X position
-        row * cardSpacingY,      // Y position
-        0                         // Z position
-      ];
-    });
+    const cardSpacing = 3; // Adjust spacing as needed
+    const cardPositions = cards.map((_, index) => [
+      (index % 5) * cardSpacing,  // X position
+      0,                          // Y position
+      Math.floor(index / 5) * -cardSpacing // Z position for rows
+    ]);
 
     return React.createElement(
       React.Fragment,
@@ -109,7 +101,7 @@ window.initGame = (React, assetsUrl) => {
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
       cards.map((url, index) =>
-        !pairsFound.includes(url) && React.createElement(Card, {
+        React.createElement(Card, {
           key: index,
           index: index,
           url: url,
