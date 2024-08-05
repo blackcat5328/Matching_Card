@@ -21,7 +21,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement(CardModel, {
       url: tableUrl,
       scale: [20, 10, 5], // Adjust scale as needed
-      position: [20, -5.5, 10] // Adjust position to place it correctly
+      position: [20, -8.5, 10] // Adjust position to place it correctly
     });
   }
 
