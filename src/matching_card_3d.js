@@ -76,7 +76,7 @@ window.initGame = (React, assetsUrl) => {
           cardIndex,
           isActive: true,
           isMatched: false,
-          model: `card_${setIndex + 1}.gltf` // Add model name
+          model: `card_${setIndex + 1}.glb` // Changed to .glb
         }));
         return cardSet;
       });
