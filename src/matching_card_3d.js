@@ -1,6 +1,6 @@
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, useMemo } = React;
-  const { useLoader, useThree, useFrame } = window.ReactThreeFiber;
+  const { Canvas, useLoader, useFrame, useThree } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
@@ -78,7 +78,6 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement(
       React.Fragment,
       null,
-      React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
       React.createElement(TableModel), 
