@@ -78,8 +78,9 @@ window.initGame = (React, assetsUrl) => {
 
     useFrame(() => {
       if (handRef.current) {
-        handRef.current.position.x = mouse.x * 5; // Adjust multiplier for distance
-        handRef.current.position.y = mouse.y * 5; // Adjust multiplier for distance
+        handRef.current.position.x = mouse.x * 10; // Adjust multiplier for distance
+        handRef.current.position.y = mouse.y * 10; // Adjust multiplier for distance
+        handRef.current.position.z = 0; // Keep the hand on the table
       }
     });
 
