@@ -65,7 +65,10 @@ window.initGame = (React, assetsUrl) => {
       scale: [3, 3, 3],
       position: [0, 5, 0],
       ref: modelRef,
-      onClick: onClick // Call the reset function directly
+      onClick: (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        onClick(); // Call the reset function
+      }
     });
   }
 
