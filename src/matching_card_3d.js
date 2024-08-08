@@ -52,25 +52,25 @@ window.initGame = (React, assetsUrl) => {
     );
   }
 
-  function RotatingModel({ onClick }) {
-    const modelRef = useRef();
-    useFrame(() => {
-      if (modelRef.current) {
-        modelRef.current.rotation.y += 0.01;
-      }
-    });
+ function RotatingModel({ onClick }) {
+  const modelRef = useRef();
+  useFrame(() => {
+    if (modelRef.current) {
+      modelRef.current.rotation.y += 0.01;
+    }
+  });
 
-    return React.createElement(CardModel, {
-      url: `${assetsUrl}/finish.glb`,
-      scale: [3, 3, 3],
-      position: [0, 5, 0],
-      ref: modelRef,
-      onClick: (e) => {
-        e.stopPropagation(); // Prevent event bubbling
-        onClick(); // Call the reset function
-      }
-    });
-  }
+  return React.createElement(CardModel, {
+    url: `${assetsUrl}/finish.glb`,
+    scale: [3, 3, 3],
+    position: [0, 5, 0],
+    ref: modelRef,
+    onClick: (e) => {
+      e.stopPropagation(); // Prevent event bubbling
+      onClick(); // Call the reset function
+    }
+  });
+}
 
   function Camera() {
     const { camera } = useThree();
