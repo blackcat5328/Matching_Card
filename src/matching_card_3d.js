@@ -73,7 +73,8 @@ window.initGame = (React, assetsUrl) => {
             url: `${assetsUrl}/finish.glb`,
             scale: [5, 5, 5],
             position: [0, 5, 0],
-            ref: modelRef
+            ref: modelRef,
+            onClick: onClick
         });
     }
 
@@ -160,16 +161,22 @@ window.initGame = (React, assetsUrl) => {
         const [cards, setCards] = useState([]);
         const [revealedCards, setRevealedCards] = useState([]);
         const [pairsFound, setPairsFound] = useState([]);
-        const totalPairs = 1;
+        const totalPairs = 10;
 
         useEffect(() => {
+            resetGame();
+        }, [assetsUrl]);
+
+        const resetGame = () => {
             const cardUrls = [];
             for (let i = 1; i <= totalPairs; i++) {
                 cardUrls.push(`${assetsUrl}/card_${i}.glb`);
                 cardUrls.push(`${assetsUrl}/card_${i}.glb`);
             }
             setCards(shuffleArray(cardUrls));
-        }, [assetsUrl]);
+            setRevealedCards([]);
+            setPairsFound([]);
+        };
 
         const shuffleArray = (array) => {
             for (let i = array.length - 1; i > 0; i--) {
@@ -218,7 +225,7 @@ window.initGame = (React, assetsUrl) => {
             React.createElement(ChairModel, { position: [0, -2.5, 10] }),  
             React.createElement(ChairModel, { position: [0, -2.5, -10] }), 
             allPairsFound 
-                ? React.createElement(RotatingModel) 
+                ? React.createElement(RotatingModel, { onClick: resetGame }) 
                 : cards.map((url, index) =>
                     !pairsFound.includes(url) && React.createElement(Card, {
                         key: index,
