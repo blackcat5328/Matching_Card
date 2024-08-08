@@ -85,7 +85,7 @@ window.initGame = (React, assetsUrl) => {
   const { camera } = useThree();
   
   useEffect(() => {
-    camera.position.set(0, 5, 10);
+    camera.position.set(15, 5, 0);
     camera.fov = 90; // Set the field of view to 90 degrees
     camera.updateProjectionMatrix(); // Update the projection matrix to apply changes
     camera.lookAt(0, 0, 0);
