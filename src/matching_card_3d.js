@@ -105,50 +105,50 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   }
 
-  function Hand() {
-    const handRef = useRef();
-    const { camera, mouse } = useThree();
-    const [isHitting, setIsHitting] = useState(false);
-    const hitStartTime = useRef(0);
+ function Hand() {
+  const handRef = useRef();
+  const { camera, mouse } = useThree();
+  const [isHitting, setIsHitting] = useState(false);
+  const hitStartTime = useRef(0);
 
-    useFrame((state, delta) => {
-      if (handRef.current) {
-        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-        vector.unproject(camera);
-        const dir = vector.sub(camera.position).normalize();
-        const distance = -camera.position.z / dir.z;
-        const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-        handRef.current.position.copy(pos);
+  useFrame((state, delta) => {
+    if (handRef.current) {
+      const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+      vector.unproject(camera);
+      const dir = vector.sub(camera.position).normalize();
+      const distance = -camera.position.z / dir.z;
+      const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+      handRef.current.position.copy(pos);
 
-        // Hitting animation
-        if (isHitting) {
-          const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
-          if (elapsedTime < 0.2) {
-            handRef.current.rotation.x = Math.PI / 2 * Math.sin(elapsedTime * Math.PI / 0.2);
-          } else {
-            setIsHitting(false);
-            handRef.current.rotation.x = 0;
-          }
+      // Update rotation based on hitting state
+      if (isHitting) {
+        const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
+        if (elapsedTime < 0.2) {
+          handRef.current.rotation.y = Math.PI / 4 * Math.sin(elapsedTime * Math.PI / 0.2); // Change angle here
+        } else {
+          setIsHitting(false);
+          handRef.current.rotation.y = 0; // Reset angle after hitting
         }
       }
-    });
+    }
+  });
 
-    const handleClick = () => {
-      setIsHitting(true);
-      hitStartTime.current = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0, 1), 0, 1);
-    };
+  const handleClick = () => {
+    setIsHitting(true);
+    hitStartTime.current = state.clock.getElapsedTime();
+  };
 
-    return React.createElement(
-      'group',
-      { ref: handRef, onClick: handleClick },
-      React.createElement(HandModel, { 
-        url: `${assetsUrl}/hand.glb`,
-        scale: [20, 20, 20],
-        position: [0, 0, -2],
-        rotation: [-Math.PI / 2, 0, 0]
-      })
-    );
-  }
+  return React.createElement(
+    'group',
+    { ref: handRef, onClick: handleClick },
+    React.createElement(HandModel, { 
+      url: `${assetsUrl}/hand.glb`,
+      scale: [5, 5, 5],
+      position: [0, 0, -2],
+      rotation: [-Math.PI / 2, 0, 0] // Initial rotation
+    })
+  );
+}
 
   function MatchingCardGame() {
     const [cards, setCards] = useState([]);
