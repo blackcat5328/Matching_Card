@@ -93,6 +93,11 @@ window.initGame = (React, assetsUrl) => {
       camera.lookAt(targetPosition);
     }, [camera]);
 
+    useFrame(() => {
+      camera.position.copy(initialPosition); // Lock position
+      camera.lookAt(targetPosition); // Look at target
+    });
+
     return null;
   }
 
