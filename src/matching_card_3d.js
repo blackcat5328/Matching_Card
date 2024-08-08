@@ -159,7 +159,7 @@ window.initGame = (React, assetsUrl) => {
       React.createElement(TextModel), 
       // Add chairs around the table
       React.createElement(ChairModel, { position: [12, -2.5, 0] }),  // Right
-      React.createElement(ChairModel, { position: [-12, -2.5, 0] }), // Left
+    
       React.createElement(ChairModel, { position: [0, -2.5, 12] }),  // Front
       React.createElement(ChairModel, { position: [0, -2.5, -12] }), // Back
       allPairsFound 
