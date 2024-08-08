@@ -85,7 +85,7 @@ window.initGame = (React, assetsUrl) => {
     const { camera } = useThree();
     
     useEffect(() => {
-      camera.position.set(10, 5, 20);
+      camera.position.set(0, 5, 10);
       camera.lookAt(0, 0, 0);
     }, [camera]);
 
@@ -110,9 +110,8 @@ window.initGame = (React, assetsUrl) => {
     const { camera, mouse } = useThree();
     const [isHitting, setIsHitting] = useState(false);
     const hitStartTime = useRef(0);
-    const elapsedTime = useRef(0);
 
-    useFrame((state) => {
+    useFrame((state, delta) => {
       if (handRef.current) {
         const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
         vector.unproject(camera);
@@ -121,13 +120,14 @@ window.initGame = (React, assetsUrl) => {
         const pos = camera.position.clone().add(dir.multiplyScalar(distance));
         handRef.current.position.copy(pos);
 
+        // Hitting animation
         if (isHitting) {
-          elapsedTime.current = state.clock.getElapsedTime() - hitStartTime.current;
-          if (elapsedTime.current < 0.2) {
-            handRef.current.rotation.x = Math.PI / 4 * Math.sin(elapsedTime.current * Math.PI / 0.2);
+          const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
+          if (elapsedTime < 0.2) {
+            handRef.current.rotation.x = Math.PI / 2 * Math.sin(elapsedTime * Math.PI / 0.2);
           } else {
             setIsHitting(false);
-            handRef.current.rotation.x = 0; // Reset rotation
+            handRef.current.rotation.x = 0;
           }
         }
       }
@@ -135,7 +135,7 @@ window.initGame = (React, assetsUrl) => {
 
     const handleClick = () => {
       setIsHitting(true);
-      hitStartTime.current = performance.now(); // Use performance.now() for more accurate timing
+      hitStartTime.current = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0, 1), 0, 1);
     };
 
     return React.createElement(
@@ -143,7 +143,7 @@ window.initGame = (React, assetsUrl) => {
       { ref: handRef, onClick: handleClick },
       React.createElement(HandModel, { 
         url: `${assetsUrl}/hand.glb`,
-        scale: [5, 5, 5],
+        scale: [20, 20, 20],
         position: [0, 0, -2],
         rotation: [-Math.PI / 2, 0, 0]
       })
