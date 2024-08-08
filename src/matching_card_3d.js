@@ -4,14 +4,17 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const CardModel = React.memo(({ url, scale = [1, 1, 1], position = [0, 0, 0] }) => {
+  const CardModel = React.forwardRef(({ url, scale = [1, 1, 1], position = [0, 0, 0] }, ref) => {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
 
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
-    }, [copiedScene, scale, position]);
+      if (ref) {
+        ref.current = copiedScene;
+      }
+    }, [copiedScene, scale, position, ref]);
 
     return React.createElement('primitive', { object: copiedScene });
   });
@@ -66,8 +69,8 @@ window.initGame = (React, assetsUrl) => {
       position: [0, 5, 0],
       ref: modelRef,
       onClick: (e) => {
-        e.stopPropagation(); // Prevent event bubbling
-        onClick(); // Call the reset function
+        e.stopPropagation();
+        onClick();
       }
     });
   }
@@ -77,11 +80,12 @@ window.initGame = (React, assetsUrl) => {
     const { mouse, camera } = useThree();
 
     useFrame(() => {
-      const x = (mouse.x * window.innerWidth) / 2;
-      const y = -(mouse.y * window.innerHeight) / 2;
-      const z = 0; // Adjust Z position if needed
-      const vector = new THREE.Vector3(x, y, z).unproject(camera);
-      handRef.current.position.copy(vector);
+      if (handRef.current) {
+        const x = (mouse.x * window.innerWidth) / 2;
+        const y = -(mouse.y * window.innerHeight) / 2;
+        const vector = new THREE.Vector3(x, y, 0).unproject(camera);
+        handRef.current.position.copy(vector);
+      }
     });
 
     return React.createElement(CardModel, {
