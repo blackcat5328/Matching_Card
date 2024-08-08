@@ -74,7 +74,19 @@ window.initGame = (React, assetsUrl) => {
 
   function HandModel() {
     const handRef = useRef();
-    const { mouse, camera } = useThree();
+    const { camera, mouse } = useThree();
+
+    useEffect(() => {
+      const handleMouseMove = (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+      };
+    }, [mouse]);
 
     useFrame(() => {
       if (handRef.current) {
