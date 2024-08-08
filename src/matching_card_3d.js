@@ -85,7 +85,7 @@ window.initGame = (React, assetsUrl) => {
     const { camera } = useThree();
     
     useEffect(() => {
-      camera.position.set(10, 5, 10);
+      camera.position.set(10, 5, 20);
       camera.lookAt(0, 0, 0);
     }, [camera]);
 
