@@ -81,16 +81,18 @@ window.initGame = (React, assetsUrl) => {
     });
   }
 
-  function Camera() {
-    const { camera } = useThree();
-    
-    useEffect(() => {
-      camera.position.set(0, 5, 10);
-      camera.lookAt(0, 0, 0);
-    }, [camera]);
+ function Camera() {
+  const { camera } = useThree();
+  
+  useEffect(() => {
+    camera.position.set(0, 5, 10);
+    camera.fov = 90; // Set the field of view to 90 degrees
+    camera.updateProjectionMatrix(); // Update the projection matrix to apply changes
+    camera.lookAt(0, 0, 0);
+  }, [camera]);
 
-    return null;
-  }
+  return null;
+}
 
   function HandModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
