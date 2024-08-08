@@ -17,7 +17,7 @@ window.initGame = (React, assetsUrl) => {
   });
 
   function TableModel() {
-    const tableUrl = `${assetsUrl}/table.glb`; 
+    const tableUrl = `${assetsUrl}/table.glb`;
     return React.createElement(CardModel, {
       url: tableUrl,
       scale: [23, 5, 13],
@@ -81,18 +81,20 @@ window.initGame = (React, assetsUrl) => {
     });
   }
 
- function Camera() {
-  const { camera } = useThree();
-  
-  useEffect(() => {
-    camera.position.set(15, 5, 7.5);
-    camera.fov = 75; // Set the field of view to 90 degrees
-    camera.updateProjectionMatrix(); // Update the projection matrix to apply changes
-    camera.lookAt(0, 0, 0);
-  }, [camera]);
+  function Camera() {
+    const { camera } = useThree();
+    const initialPosition = new THREE.Vector3(15, 5, 7.5);
+    const targetPosition = new THREE.Vector3(0, 0, 0);
 
-  return null;
-}
+    useEffect(() => {
+      camera.position.copy(initialPosition);
+      camera.fov = 75;
+      camera.updateProjectionMatrix();
+      camera.lookAt(targetPosition);
+    }, [camera]);
+
+    return null;
+  }
 
   function HandModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
