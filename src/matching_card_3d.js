@@ -29,7 +29,7 @@ window.initGame = (React, assetsUrl) => {
     const textUrl = `${assetsUrl}/matchk.glb`;
     return React.createElement(CardModel, {
       url: textUrl,
-      scale: [10, 5, 7],
+      scale: [5, 3, 5],
       position: [-5, 5, 0]
     });
   }
@@ -52,38 +52,25 @@ window.initGame = (React, assetsUrl) => {
     );
   }
 
-  function HandModel() {
-    const handRef = useRef();
-    const { camera } = useThree();
-    const mouse = useRef(new THREE.Vector2());
+ function RotatingModel({ onClick }) {
+  const modelRef = useRef();
+  useFrame(() => {
+    if (modelRef.current) {
+      modelRef.current.rotation.y += 0.01;
+    }
+  });
 
-    useEffect(() => {
-      const handleMouseMove = (event) => {
-        mouse.current.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      };
-
-      window.addEventListener('mousemove', handleMouseMove);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-      };
-    }, []);
-
-    useFrame(() => {
-      if (handRef.current) {
-        const vector = new THREE.Vector3(mouse.current.x, mouse.current.y, 0.5).unproject(camera);
-        handRef.current.position.copy(vector);
-        handRef.current.position.z = 0; // Adjust Z position if needed
-      }
-    });
-
-    return React.createElement(CardModel, {
-      url: `${assetsUrl}/hand.glb`,
-      scale: [1, 1, 1],
-      position: [0, 0, 0],
-      ref: handRef
-    });
-  }
+  return React.createElement(CardModel, {
+    url: `${assetsUrl}/finish.glb`,
+    scale: [3, 3, 3],
+    position: [0, 5, 0],
+    ref: modelRef,
+    onClick: (e) => {
+      e.stopPropagation(); // Prevent event bubbling
+      onClick(); // Call the reset function
+    }
+  });
+}
 
   function Camera() {
     const { camera } = useThree();
@@ -172,8 +159,7 @@ window.initGame = (React, assetsUrl) => {
             onReveal: revealCard,
             position: cardPositions[index]
           })
-        ),
-      React.createElement(HandModel)
+        )
     );
   }
 
