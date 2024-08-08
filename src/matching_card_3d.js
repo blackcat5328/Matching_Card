@@ -4,15 +4,14 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const CardModel = React.memo(({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) => {
+  const CardModel = React.memo(({ url, scale = [1, 1, 1], position = [0, 0, 0] }) => {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
 
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
-      copiedScene.rotation.set(...rotation);
-    }, [copiedScene, scale, position, rotation]);
+    }, [copiedScene, scale, position]);
 
     return React.createElement('primitive', { object: copiedScene });
   });
@@ -31,8 +30,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement(CardModel, {
       url: chairUrl,
       scale: [1, 1, 1],
-      position: position,
-      rotation: [0, 0, 0] // Keep the chair upright
+      position: position
     });
   }
 
@@ -58,8 +56,7 @@ window.initGame = (React, assetsUrl) => {
       React.createElement(CardModel, { 
         url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
         scale: [2, 2, 2],
-        position: [0, 0, 0],
-        rotation: [Math.PI / 2, 0, 0]
+        position: [0, 0, 0]
       })
     );
   }
@@ -78,8 +75,8 @@ window.initGame = (React, assetsUrl) => {
       position: [0, 5, 0],
       ref: modelRef,
       onClick: (e) => {
-        e.stopPropagation();
-        onClick();
+        e.stopPropagation(); // Prevent event bubbling
+        onClick(); // Call the reset function
       }
     });
   }
