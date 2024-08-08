@@ -4,6 +4,15 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
+  // Global mouse tracking
+  window.mouseX = 0;
+  window.mouseY = 0;
+
+  window.addEventListener('mousemove', (event) => {
+    window.mouseX = event.clientX;
+    window.mouseY = event.clientY;
+  });
+
   const CardModel = React.memo(({ url, scale = [1, 1, 1], position = [0, 0, 0] }) => {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
@@ -74,13 +83,22 @@ window.initGame = (React, assetsUrl) => {
 
   function HandModel() {
     const handRef = useRef();
-    const { mouse } = useThree();
+    const { camera } = useThree();
 
     useFrame(() => {
       if (handRef.current) {
-        handRef.current.position.x = mouse.x * 10; // Adjust multiplier for distance
-        handRef.current.position.y = mouse.y * 10; // Adjust multiplier for distance
-        handRef.current.position.z = 0; // Keep the hand on the table
+        const mouse = new THREE.Vector3();
+        mouse.x = (window.mouseX / window.innerWidth) * 2 - 1; // Normalize to [-1, 1]
+        mouse.y = -(window.mouseY / window.innerHeight) * 2 + 1;
+
+        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+        vector.unproject(camera);
+
+        const dir = vector.sub(camera.position).normalize();
+        const distance = -camera.position.z / dir.z;
+        const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+
+        handRef.current.position.set(pos.x, pos.y, 0); // Keep z at 0
       }
     });
 
