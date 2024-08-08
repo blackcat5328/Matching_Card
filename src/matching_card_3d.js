@@ -92,15 +92,15 @@ window.initGame = (React, assetsUrl) => {
     return null;
   }
 
-  function HandModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
+  function HandModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
 
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
-      copiedScene.rotation.set(...rotation);
-    }, [copiedScene, scale, position, rotation]);
+      copiedScene.rotation.set(0, Math.PI, 0); // Rotate 180 degrees horizontally
+    }, [copiedScene, scale, position]);
 
     return React.createElement('primitive', { object: copiedScene });
   }
@@ -111,7 +111,7 @@ window.initGame = (React, assetsUrl) => {
     const [isHitting, setIsHitting] = useState(false);
     const hitStartTime = useRef(0);
 
-    useFrame((state, delta) => {
+    useFrame((state) => {
       if (handRef.current) {
         const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
         vector.unproject(camera);
