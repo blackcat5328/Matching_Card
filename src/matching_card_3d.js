@@ -29,7 +29,7 @@ window.initGame = (React, assetsUrl) => {
     const chairUrl = `${assetsUrl}/chair.glb`; // Adjust the URL for chair model
     return React.createElement(CardModel, {
       url: chairUrl,
-      scale: [3, 2.5, 3],
+      scale: [2, 2, 2],
       position: position
     });
   }
