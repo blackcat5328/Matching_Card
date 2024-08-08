@@ -143,9 +143,8 @@ window.initGame = (React, assetsUrl) => {
       { ref: handRef, onClick: handleClick },
       React.createElement(HandModel, { 
         url: `${assetsUrl}/hand.glb`,
-        scale: [20, 20, 20],
+        scale: [5, 5, 5],
         position: [0, 0, -2],
-        rotation: [-Math.PI / 2, 0, 0]
       })
     );
   }
