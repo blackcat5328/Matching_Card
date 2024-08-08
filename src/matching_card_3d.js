@@ -25,11 +25,20 @@ window.initGame = (React, assetsUrl) => {
     });
   }
 
+  function ChairModel({ position }) {
+    const chairUrl = `${assetsUrl}/chair.glb`;
+    return React.createElement(CardModel, {
+      url: chairUrl,
+      scale: [2, 2, 2],
+      position: position
+    });
+  }
+
   function TextModel() {
     const textUrl = `${assetsUrl}/matchk.glb`;
     return React.createElement(CardModel, {
       url: textUrl,
-      scale: [10, 5, 7],
+      scale: [5, 3, 5],
       position: [-5, 5, 0]
     });
   }
@@ -52,36 +61,23 @@ window.initGame = (React, assetsUrl) => {
     );
   }
 
-  function HandModel() {
-    const handRef = useRef();
-    const { camera } = useThree();
-    const mouse = useRef(new THREE.Vector2());
-
-    useEffect(() => {
-      const handleMouseMove = (event) => {
-        mouse.current.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
-      };
-
-      window.addEventListener('mousemove', handleMouseMove);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-      };
-    }, []);
-
+  function RotatingModel({ onClick }) {
+    const modelRef = useRef();
     useFrame(() => {
-      if (handRef.current) {
-        const vector = new THREE.Vector3(mouse.current.x, mouse.current.y, 0.5).unproject(camera);
-        handRef.current.position.copy(vector);
-        handRef.current.position.z = 0; // Adjust Z position if needed
+      if (modelRef.current) {
+        modelRef.current.rotation.y += 0.01;
       }
     });
 
     return React.createElement(CardModel, {
-      url: `${assetsUrl}/hand.glb`,
-      scale: [1, 1, 1],
-      position: [0, 0, 0],
-      ref: handRef
+      url: `${assetsUrl}/finish.glb`,
+      scale: [3, 3, 3],
+      position: [0, 5, 0],
+      ref: modelRef,
+      onClick: (e) => {
+        e.stopPropagation(); 
+        onClick();
+      }
     });
   }
 
@@ -94,6 +90,63 @@ window.initGame = (React, assetsUrl) => {
     }, [camera]);
 
     return null;
+  }
+
+  function HandModel({ url, scale = [1, 1, 1], position = [0, 0, 0], rotation = [0, 0, 0] }) {
+    const gltf = useLoader(GLTFLoader, url);
+    const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
+
+    useEffect(() => {
+      copiedScene.scale.set(...scale);
+      copiedScene.position.set(...position);
+      copiedScene.rotation.set(...rotation);
+    }, [copiedScene, scale, position, rotation]);
+
+    return React.createElement('primitive', { object: copiedScene });
+  }
+
+  function Hand() {
+    const handRef = useRef();
+    const { camera, mouse } = useThree();
+    const [isHitting, setIsHitting] = useState(false);
+    const hitStartTime = useRef(0);
+
+    useFrame((state) => {
+      if (handRef.current) {
+        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+        vector.unproject(camera);
+        const dir = vector.sub(camera.position).normalize();
+        const distance = -camera.position.z / dir.z;
+        const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+        handRef.current.position.copy(pos);
+
+        if (isHitting) {
+          const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
+          if (elapsedTime < 0.2) {
+            handRef.current.rotation.x = Math.PI / 4 * Math.sin(elapsedTime * Math.PI / 0.2);
+          } else {
+            setIsHitting(false);
+            handRef.current.rotation.x = 0; // Reset rotation
+          }
+        }
+      }
+    });
+
+    const handleClick = () => {
+      setIsHitting(true);
+      hitStartTime.current = state.clock.getElapsedTime();
+    };
+
+    return React.createElement(
+      'group',
+      { ref: handRef, onClick: handleClick },
+      React.createElement(HandModel, { 
+        url: `${assetsUrl}/hand.glb`,
+        scale: [5, 5, 5],
+        position: [0, 0, -2],
+        rotation: [-Math.PI / 2, 0, 0]
+      })
+    );
   }
 
   function MatchingCardGame() {
@@ -161,6 +214,9 @@ window.initGame = (React, assetsUrl) => {
       React.createElement('pointLight', { position: [10, 10, 10] }),
       React.createElement(TableModel), 
       React.createElement(TextModel), 
+      React.createElement(ChairModel, { position: [10, -2.5, 0] }),  
+      React.createElement(ChairModel, { position: [0, -2.5, 10] }),  
+      React.createElement(ChairModel, { position: [0, -2.5, -10] }), 
       allPairsFound 
         ? React.createElement(RotatingModel, { onClick: resetGame }) 
         : cards.map((url, index) =>
@@ -173,7 +229,7 @@ window.initGame = (React, assetsUrl) => {
             position: cardPositions[index]
           })
         ),
-      React.createElement(HandModel)
+      React.createElement(Hand) // Add hand model
     );
   }
 
