@@ -68,7 +68,6 @@ window.initGame = (React, assetsUrl) => {
         modelRef.current.rotation.y += 0.01;
       }
     });
-
     return React.createElement(CardModel, {
       url: `${assetsUrl}/finish.glb`,
       scale: [3, 3, 3],
@@ -83,7 +82,7 @@ window.initGame = (React, assetsUrl) => {
 
   function Camera() {
     const { camera } = useThree();
-    const initialPosition = new THREE.Vector3(10, 5, 30);
+    const initialPosition = new THREE.Vector3(30, 5, 10);
     const targetPosition = new THREE.Vector3(0, 0, 0);
 
     useEffect(() => {
