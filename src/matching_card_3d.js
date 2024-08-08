@@ -110,6 +110,7 @@ window.initGame = (React, assetsUrl) => {
     const { camera, mouse } = useThree();
     const [isHitting, setIsHitting] = useState(false);
     const hitStartTime = useRef(0);
+    const elapsedTime = useRef(0);
 
     useFrame((state) => {
       if (handRef.current) {
@@ -121,9 +122,9 @@ window.initGame = (React, assetsUrl) => {
         handRef.current.position.copy(pos);
 
         if (isHitting) {
-          const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
-          if (elapsedTime < 0.2) {
-            handRef.current.rotation.x = Math.PI / 4 * Math.sin(elapsedTime * Math.PI / 0.2);
+          elapsedTime.current = state.clock.getElapsedTime() - hitStartTime.current;
+          if (elapsedTime.current < 0.2) {
+            handRef.current.rotation.x = Math.PI / 4 * Math.sin(elapsedTime.current * Math.PI / 0.2);
           } else {
             setIsHitting(false);
             handRef.current.rotation.x = 0; // Reset rotation
@@ -134,7 +135,7 @@ window.initGame = (React, assetsUrl) => {
 
     const handleClick = () => {
       setIsHitting(true);
-      hitStartTime.current = state.clock.getElapsedTime();
+      hitStartTime.current = performance.now(); // Use performance.now() for more accurate timing
     };
 
     return React.createElement(
