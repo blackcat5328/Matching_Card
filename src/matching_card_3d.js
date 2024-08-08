@@ -29,7 +29,7 @@ window.initGame = (React, assetsUrl) => {
     const textUrl = `${assetsUrl}/matchk.glb`;
     return React.createElement(CardModel, {
       url: textUrl,
-      scale: [5, 3, 5],
+      scale: [10, 3, 10],
       position: [-5, 5, 0]
     });
   }
