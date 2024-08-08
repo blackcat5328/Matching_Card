@@ -20,6 +20,7 @@ window.initGame = (React, assetsUrl) => {
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
+      copiedScene.rotation.x = Math.PI / 2; // Rotate 90 degrees on the X-axis
     }, [copiedScene, scale, position]);
 
     return React.createElement('primitive', { object: copiedScene });
