@@ -141,12 +141,12 @@ window.initGame = (React, assetsUrl) => {
   return React.createElement(
     'group',
     { ref: handRef, onClick: handleClick },
-    React.createElement(HandModel, { 
-      url: `${assetsUrl}/hand.glb`,
-      scale: [5, 5, 5],
-      position: [0, 0, -2],
-      rotation: [-Math.PI / 2, 0, 0] // Initial rotation
-    })
+  React.createElement(HandModel, { 
+  url: `${assetsUrl}/hand.glb`,
+  scale: [5, 5, 5],
+  position: [0, 0, -2],
+  rotation: [-Math.PI / 2, Math.PI / 4, 0] // Rotate 45 degrees around Y-axis
+})
   );
 }
 
