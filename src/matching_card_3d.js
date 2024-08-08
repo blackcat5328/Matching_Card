@@ -92,6 +92,7 @@ window.initGame = (React, assetsUrl) => {
       if (handRef.current) {
         const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera);
         handRef.current.position.copy(vector);
+        handRef.current.position.z = 0; // Adjust Z position if needed
       }
     });
 
