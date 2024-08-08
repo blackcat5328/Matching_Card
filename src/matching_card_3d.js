@@ -1,10 +1,10 @@
 window.initGame = (React, assetsUrl) => {
   const { useState, useEffect, useRef, useMemo } = React;
-  const { Canvas, useLoader, useFrame, useThree } = window.ReactThreeFiber;
+  const { useLoader, useThree, useFrame } = window.ReactThreeFiber;
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  const HandModel = React.memo(({ url, scale = [1, 1, 1], position = [0, 0, 0] }) => {
+  const CardModel = React.memo(({ url, scale = [1, 1, 1], position = [0, 0, 0] }) => {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
 
@@ -16,7 +16,92 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement('primitive', { object: copiedScene });
   });
 
-  // Existing CardModel and other components...
+  function TableModel() {
+    const tableUrl = `${assetsUrl}/table.glb`; 
+    return React.createElement(CardModel, {
+      url: tableUrl,
+      scale: [23, 5, 13],
+      position: [0, -2.5, 0]
+    });
+  }
+
+  function TextModel() {
+    const textUrl = `${assetsUrl}/matchk.glb`;
+    return React.createElement(CardModel, {
+      url: textUrl,
+      scale: [5, 3, 5],
+      position: [-5, 5, 0]
+    });
+  }
+
+  function Card({ index, url, isRevealed, onReveal, position }) {
+    const handleClick = () => {
+      if (!isRevealed) {
+        onReveal(index);
+      }
+    };
+
+    return React.createElement(
+      'group',
+      { onClick: handleClick, position },
+      React.createElement(CardModel, { 
+        url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
+        scale: [2, 2, 2],
+        position: [0, 0, 0]
+      })
+    );
+  }
+
+  function RotatingModel({ onClick }) {
+    const modelRef = useRef();
+    useFrame(() => {
+      if (modelRef.current) {
+        modelRef.current.rotation.y += 0.01;
+      }
+    });
+
+    return React.createElement(CardModel, {
+      url: `${assetsUrl}/finish.glb`,
+      scale: [3, 3, 3],
+      position: [0, 5, 0],
+      ref: modelRef,
+      onClick: (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        onClick(); // Call the reset function
+      }
+    });
+  }
+
+  function HandModel() {
+    const handRef = useRef();
+    const { mouse, camera } = useThree();
+
+    useFrame(() => {
+      const x = (mouse.x * window.innerWidth) / 2;
+      const y = -(mouse.y * window.innerHeight) / 2;
+      const z = 0; // Adjust Z position if needed
+      const vector = new THREE.Vector3(x, y, z).unproject(camera);
+      handRef.current.position.copy(vector);
+    });
+
+    return React.createElement(CardModel, {
+      url: `${assetsUrl}/hand.glb`,
+      scale: [1, 1, 1],
+      position: [0, 0, 0],
+      ref: handRef
+    });
+  }
+
+  function Camera() {
+    const { camera } = useThree();
+    
+    useEffect(() => {
+      camera.position.set(0, 5, 10);
+      camera.lookAt(0, 0, 0);
+    }, [camera]);
+
+    return null;
+  }
 
   function MatchingCardGame() {
     const [cards, setCards] = useState([]);
@@ -78,6 +163,7 @@ window.initGame = (React, assetsUrl) => {
     return React.createElement(
       React.Fragment,
       null,
+      React.createElement(Camera),
       React.createElement('ambientLight', { intensity: 0.5 }),
       React.createElement('pointLight', { position: [10, 10, 10] }),
       React.createElement(TableModel), 
@@ -94,16 +180,11 @@ window.initGame = (React, assetsUrl) => {
             position: cardPositions[index]
           })
         ),
-      React.createElement(HandModel, {
-        url: `${assetsUrl}/hand.glb`,
-        scale: [1, 1, 1],
-        position: [0, 1, -5] // Adjust position as necessary
-      })
+      React.createElement(HandModel)
     );
   }
 
   return MatchingCardGame;
 };
 
-// Console log to confirm the script loaded
 console.log('Matching card game script loaded');
