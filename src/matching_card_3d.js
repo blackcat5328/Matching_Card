@@ -54,23 +54,24 @@ window.initGame = (React, assetsUrl) => {
 
   function HandModel() {
     const handRef = useRef();
-    const { camera, mouse } = useThree();
+    const { camera } = useThree();
+    const mouse = useRef(new THREE.Vector2());
 
     useEffect(() => {
       const handleMouseMove = (event) => {
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        mouse.current.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
       };
 
       window.addEventListener('mousemove', handleMouseMove);
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
       };
-    }, [mouse]);
+    }, []);
 
     useFrame(() => {
       if (handRef.current) {
-        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5).unproject(camera);
+        const vector = new THREE.Vector3(mouse.current.x, mouse.current.y, 0.5).unproject(camera);
         handRef.current.position.copy(vector);
         handRef.current.position.z = 0; // Adjust Z position if needed
       }
