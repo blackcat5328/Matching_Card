@@ -4,15 +4,6 @@ window.initGame = (React, assetsUrl) => {
   const THREE = window.THREE;
   const { GLTFLoader } = window.THREE;
 
-  // Global mouse tracking
-  window.mouseX = 0;
-  window.mouseY = 0;
-
-  window.addEventListener('mousemove', (event) => {
-    window.mouseX = event.clientX;
-    window.mouseY = event.clientY;
-  });
-
   const CardModel = React.memo(({ url, scale = [1, 1, 1], position = [0, 0, 0] }) => {
     const gltf = useLoader(GLTFLoader, url);
     const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
@@ -20,7 +11,6 @@ window.initGame = (React, assetsUrl) => {
     useEffect(() => {
       copiedScene.scale.set(...scale);
       copiedScene.position.set(...position);
-      copiedScene.rotation.x = Math.PI / 2; // Rotate 90 degrees on the X-axis
     }, [copiedScene, scale, position]);
 
     return React.createElement('primitive', { object: copiedScene });
@@ -62,54 +52,25 @@ window.initGame = (React, assetsUrl) => {
     );
   }
 
-  function RotatingModel({ onClick }) {
-    const modelRef = useRef();
-    useFrame(() => {
-      if (modelRef.current) {
-        modelRef.current.rotation.y += 0.01;
-      }
-    });
+ function RotatingModel({ onClick }) {
+  const modelRef = useRef();
+  useFrame(() => {
+    if (modelRef.current) {
+      modelRef.current.rotation.y += 0.01;
+    }
+  });
 
-    return React.createElement(CardModel, {
-      url: `${assetsUrl}/finish.glb`,
-      scale: [3, 3, 3],
-      position: [0, 5, 0],
-      ref: modelRef,
-      onClick: (e) => {
-        e.stopPropagation(); 
-        onClick(); 
-      }
-    });
-  }
-
-  function HandModel() {
-    const handRef = useRef();
-    const { camera } = useThree();
-
-    useFrame(() => {
-      if (handRef.current) {
-        const mouse = new THREE.Vector3();
-        mouse.x = (window.mouseX / window.innerWidth) * 2 - 1; // Normalize to [-1, 1]
-        mouse.y = -(window.mouseY / window.innerHeight) * 2 + 1;
-
-        const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-        vector.unproject(camera);
-
-        const dir = vector.sub(camera.position).normalize();
-        const distance = -camera.position.z / dir.z;
-        const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-
-        handRef.current.position.set(pos.x, pos.y, 0); // Keep z at 0
-      }
-    });
-
-    return React.createElement(CardModel, {
-      url: `${assetsUrl}/hand.glb`,
-      scale: [1, 1, 1],
-      position: [0, 0, 0],
-      ref: handRef
-    });
-  }
+  return React.createElement(CardModel, {
+    url: `${assetsUrl}/finish.glb`,
+    scale: [3, 3, 3],
+    position: [0, 5, 0],
+    ref: modelRef,
+    onClick: (e) => {
+      e.stopPropagation(); // Prevent event bubbling
+      onClick(); // Call the reset function
+    }
+  });
+}
 
   function Camera() {
     const { camera } = useThree();
@@ -187,7 +148,6 @@ window.initGame = (React, assetsUrl) => {
       React.createElement('pointLight', { position: [10, 10, 10] }),
       React.createElement(TableModel), 
       React.createElement(TextModel), 
-      React.createElement(HandModel), 
       allPairsFound 
         ? React.createElement(RotatingModel, { onClick: resetGame }) 
         : cards.map((url, index) =>
