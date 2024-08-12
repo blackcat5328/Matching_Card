@@ -83,12 +83,17 @@ window.initGame = (React, assetsUrl) => {
         const initialPosition = new THREE.Vector3(12, 7, 0.5);
         const targetPosition = new THREE.Vector3(0, 0, 0);
 
-        useEffect(() => {
+       useEffect(() => {
             camera.position.copy(initialPosition);
             camera.fov = 75;
             camera.updateProjectionMatrix();
             camera.lookAt(targetPosition);
         }, [camera]);
+
+        useFrame(() => {
+            camera.position.copy(initialPosition);
+            camera.lookAt(targetPosition);
+        });
 
         return null;
     }
