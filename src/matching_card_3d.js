@@ -80,7 +80,7 @@ window.initGame = (React, assetsUrl) => {
 
     function Camera() {
         const { camera } = useThree();
-        const initialPosition = new THREE.Vector3(0, 8, 15);
+        const initialPosition = new THREE.Vector3(13, 6, 2);
         const targetPosition = new THREE.Vector3(0, 0, 0);
 
         useEffect(() => {
