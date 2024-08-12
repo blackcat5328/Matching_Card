@@ -78,7 +78,7 @@ window.initGame = (React, assetsUrl) => {
         });
     }
 
-  function Camera() {
+    function Camera() {
         const { camera } = useThree();
         const initialPosition = new THREE.Vector3(12, 7, 0.5);
         const targetPosition = new THREE.Vector3(0, 0, 0);
@@ -90,13 +90,9 @@ window.initGame = (React, assetsUrl) => {
             camera.lookAt(targetPosition);
         }, [camera]);
 
-        useFrame(() => {
-            camera.position.copy(initialPosition);
-            camera.lookAt(targetPosition);
-        });
-
         return null;
     }
+
     function HandModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
         const gltf = useLoader(GLTFLoader, url);
         const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
@@ -200,10 +196,11 @@ window.initGame = (React, assetsUrl) => {
         };
 
         const cardSpacing = 2.2;
+        const cardsPerRow = totalPairs === 5 ? 2 : 4; // Adjust for 5 or 10 pairs
         const cardPositions = cards.map((_, index) => [
-            (index % 4) * cardSpacing - (2.5 * 2),
+            (index % cardsPerRow) * cardSpacing - (2.5 * cardsPerRow / 2),
             0.1,
-            Math.floor(index / 4) * -cardSpacing
+            Math.floor(index / cardsPerRow) * -cardSpacing
         ]);
 
         const allPairsFound = pairsFound.length === totalPairs;
