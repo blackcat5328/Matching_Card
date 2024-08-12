@@ -78,7 +78,7 @@ window.initGame = (React, assetsUrl) => {
         });
     }
 
-    function Camera() {
+  function Camera() {
         const { camera } = useThree();
         const initialPosition = new THREE.Vector3(12, 7, 0.5);
         const targetPosition = new THREE.Vector3(0, 0, 0);
@@ -90,9 +90,13 @@ window.initGame = (React, assetsUrl) => {
             camera.lookAt(targetPosition);
         }, [camera]);
 
+        useFrame(() => {
+            camera.position.copy(initialPosition);
+            camera.lookAt(targetPosition);
+        });
+
         return null;
     }
-
     function HandModel({ url, scale = [1, 1, 1], position = [0, 0, 0] }) {
         const gltf = useLoader(GLTFLoader, url);
         const copiedScene = useMemo(() => gltf.scene.clone(), [gltf]);
