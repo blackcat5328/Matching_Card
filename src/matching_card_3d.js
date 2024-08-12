@@ -80,12 +80,14 @@ window.initGame = (React, assetsUrl) => {
 
     function Camera() {
         const { camera } = useThree();
-        const initialPosition = new THREE.Vector3(13, 6, 2);
+        const initialPosition = new THREE.Vector3(0, 8, 15);
         const targetPosition = new THREE.Vector3(0, 0, 0);
 
         useEffect(() => {
             camera.position.copy(initialPosition);
             camera.fov = 75;
+            camera.layers.enable(0);  // Enable default layer
+            camera.layers.enable(1);  // Enable layer 1 for hand
             camera.updateProjectionMatrix();
             camera.lookAt(targetPosition);
         }, [camera]);
@@ -113,10 +115,17 @@ window.initGame = (React, assetsUrl) => {
 
     function Hand() {
         const handRef = useRef();
-        const { camera, mouse } = useThree();
+        const { camera, mouse, viewport } = useThree();
         const [isHitting, setIsHitting] = useState(false);
         const hitStartTime = useRef(0);
         const [isVisible, setIsVisible] = useState(true);
+        const baseScale = 3; // Base scale of the hand
+
+        useEffect(() => {
+            if (handRef.current) {
+                handRef.current.layers.set(1);  // Set the hand to layer 1
+            }
+        }, []);
 
         useFrame((state) => {
             if (handRef.current) {
@@ -126,6 +135,11 @@ window.initGame = (React, assetsUrl) => {
                 const distance = -camera.position.z / dir.z;
                 const pos = camera.position.clone().add(dir.multiplyScalar(distance));
                 handRef.current.position.copy(pos);
+
+                // Calculate the scale based on the distance from the camera
+                const distanceFromCamera = camera.position.distanceTo(pos);
+                const scale = baseScale * (distanceFromCamera / 15); // Adjust the divisor as needed
+                handRef.current.scale.set(scale, scale, scale);
 
                 setIsVisible(mouse.x >= 0);
 
@@ -151,7 +165,7 @@ window.initGame = (React, assetsUrl) => {
             { ref: handRef, onClick: handleClick, visible: isVisible },
             React.createElement(HandModel, { 
                 url: `${assetsUrl}/hand.glb`,
-                scale: [3, 3, 3],
+                scale: [1, 1, 1], // We'll adjust the scale dynamically
                 position: [0, 0, 0],
             })
         );
@@ -219,24 +233,32 @@ window.initGame = (React, assetsUrl) => {
             React.createElement(Camera),
             React.createElement('ambientLight', { intensity: 0.5 }),
             React.createElement('pointLight', { position: [10, 10, 10] }),
-            React.createElement(TableModel), 
-            React.createElement(TextModel), 
-            React.createElement(ChairModel, { position: [10, -2.5, 0] }),  
-            React.createElement(ChairModel, { position: [0, -2.5, 10] }),  
-            React.createElement(ChairModel, { position: [0, -2.5, -10] }), 
-            allPairsFound 
-                ? React.createElement(RotatingModel, { onClick: resetGame }) 
-                : cards.map((url, index) =>
-                    !pairsFound.includes(url) && React.createElement(Card, {
-                        key: index,
-                        index: index,
-                        url: url,
-                        isRevealed: revealedCards.includes(index),
-                        onReveal: revealCard,
-                        position: cardPositions[index]
-                    })
-                ),
-            React.createElement(Hand) 
+            React.createElement(
+                'group',
+                { renderOrder: 0 },  // Render this group first
+                React.createElement(TableModel),
+                React.createElement(TextModel),
+                React.createElement(ChairModel, { position: [10, -2.5, 0] }),
+                React.createElement(ChairModel, { position: [0, -2.5, 10] }),
+                React.createElement(ChairModel, { position: [0, -2.5, -10] }),
+                allPairsFound 
+                    ? React.createElement(RotatingModel, { onClick: resetGame }) 
+                    : cards.map((url, index) =>
+                        !pairsFound.includes(url) && React.createElement(Card, {
+                            key: index,
+                            index: index,
+                            url: url,
+                            isRevealed: revealedCards.includes(index),
+                            onReveal: revealCard,
+                            position: cardPositions[index]
+                        })
+                    )
+            ),
+            React.createElement(
+                'group',
+                { renderOrder: 1 },  // Render this group last
+                React.createElement(Hand)
+            )
         );
     }
 
