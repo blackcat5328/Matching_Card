@@ -86,16 +86,9 @@ window.initGame = (React, assetsUrl) => {
         useEffect(() => {
             camera.position.copy(initialPosition);
             camera.fov = 75;
-            camera.layers.enable(0);  // Enable default layer
-            camera.layers.enable(1);  // Enable layer 1 for hand
             camera.updateProjectionMatrix();
             camera.lookAt(targetPosition);
         }, [camera]);
-
-        useFrame(() => {
-            camera.position.copy(initialPosition);
-            camera.lookAt(targetPosition);
-        });
 
         return null;
     }
@@ -115,7 +108,7 @@ window.initGame = (React, assetsUrl) => {
 
     function Hand() {
         const handRef = useRef();
-        const { camera, mouse, viewport } = useThree();
+        const { camera, mouse } = useThree();
         const [isHitting, setIsHitting] = useState(false);
         const hitStartTime = useRef(0);
         const [isVisible, setIsVisible] = useState(true);
@@ -136,9 +129,8 @@ window.initGame = (React, assetsUrl) => {
                 const pos = camera.position.clone().add(dir.multiplyScalar(distance));
                 handRef.current.position.copy(pos);
 
-                // Calculate the scale based on the distance from the camera
                 const distanceFromCamera = camera.position.distanceTo(pos);
-                const scale = baseScale * (distanceFromCamera / 15); // Adjust the divisor as needed
+                const scale = baseScale * (distanceFromCamera / 15);
                 handRef.current.scale.set(scale, scale, scale);
 
                 setIsVisible(mouse.x >= 0);
@@ -165,7 +157,7 @@ window.initGame = (React, assetsUrl) => {
             { ref: handRef, onClick: handleClick, visible: isVisible },
             React.createElement(HandModel, { 
                 url: `${assetsUrl}/hand.glb`,
-                scale: [1, 1, 1], // We'll adjust the scale dynamically
+                scale: [1, 1, 1],
                 position: [0, 0, 0],
             })
         );
@@ -256,7 +248,7 @@ window.initGame = (React, assetsUrl) => {
             ),
             React.createElement(
                 'group',
-                { renderOrder: 1 },  // Render this group last
+                { renderOrder: 2 },  // Hand group should render last
                 React.createElement(Hand)
             )
         );
