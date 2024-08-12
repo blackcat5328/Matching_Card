@@ -106,62 +106,49 @@ window.initGame = (React, assetsUrl) => {
         return React.createElement('primitive', { object: copiedScene });
     }
 
-    function Hand() {
-        const handRef = useRef();
-        const { camera, mouse } = useThree();
-        const [isHitting, setIsHitting] = useState(false);
-        const hitStartTime = useRef(0);
-        const [isVisible, setIsVisible] = useState(true);
-        const baseScale = 3; // Base scale of the hand
+   function Hand() {
+    const handRef = useRef();
+    const { camera, mouse } = useThree();
+    const baseScale = 3;
 
-        useEffect(() => {
-            if (handRef.current) {
-                handRef.current.layers.set(1);  // Set the hand to layer 1
-            }
-        }, []);
+    useEffect(() => {
+        if (handRef.current) {
+            handRef.current.layers.set(1);
+        }
+    }, []);
 
-        useFrame((state) => {
-            if (handRef.current) {
-                const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-                vector.unproject(camera);
-                const dir = vector.sub(camera.position).normalize();
-                const distance = -camera.position.z / dir.z;
-                const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-                handRef.current.position.copy(pos);
+    useFrame((state) => {
+        if (handRef.current) {
+            const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+            vector.unproject(camera);
+            const dir = vector.sub(camera.position).normalize();
+            const distance = -camera.position.z / dir.z;
+            const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+            handRef.current.position.copy(pos);
 
-                const distanceFromCamera = camera.position.distanceTo(pos);
-                const scale = baseScale * (distanceFromCamera / 15);
-                handRef.current.scale.set(scale, scale, scale);
+            const distanceFromCamera = camera.position.distanceTo(pos);
+            const scale = baseScale * Math.min(distanceFromCamera / 15, 1.5); // Limit max scale
+            handRef.current.scale.set(scale, scale, scale);
 
-                setIsVisible(mouse.x >= 0);
+            // Always make it visible
+            handRef.current.visible = true; 
+        }
+    });
 
-                if (isHitting) {
-                    const elapsedTime = state.clock.getElapsedTime() - hitStartTime.current;
-                    if (elapsedTime < 0.2) {
-                        handRef.current.rotation.x = Math.PI / 2 * Math.sin(elapsedTime * Math.PI / 0.2);
-                    } else {
-                        setIsHitting(false);
-                        handRef.current.rotation.x = 0;
-                    }
-                }
-            }
-        });
+    const handleClick = () => {
+        // Click logic...
+    };
 
-        const handleClick = () => {
-            setIsHitting(true);
-            hitStartTime.current = THREE.MathUtils.clamp(THREE.MathUtils.randFloat(0, 1), 0, 1);
-        };
-
-        return React.createElement(
-            'group',
-            { ref: handRef, onClick: handleClick, visible: isVisible },
-            React.createElement(HandModel, { 
-                url: `${assetsUrl}/hand.glb`,
-                scale: [1, 1, 1],
-                position: [0, 0, 0],
-            })
-        );
-    }
+    return React.createElement(
+        'group',
+        { ref: handRef, onClick: handleClick },
+        React.createElement(HandModel, { 
+            url: `${assetsUrl}/hand.glb`,
+            scale: [1, 1, 1],
+            position: [0, 0, 0],
+        })
+    );
+}
 
     function MatchingCardGame() {
         const [cards, setCards] = useState([]);
