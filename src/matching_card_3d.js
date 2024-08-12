@@ -78,7 +78,7 @@ window.initGame = (React, assetsUrl) => {
         });
     }
 
-      function Camera() {
+    function Camera() {
         const { camera } = useThree();
         const initialPosition = new THREE.Vector3(12, 7, 0.5);
         const targetPosition = new THREE.Vector3(0, 0, 0);
@@ -89,11 +89,6 @@ window.initGame = (React, assetsUrl) => {
             camera.updateProjectionMatrix();
             camera.lookAt(targetPosition);
         }, [camera]);
-
-        useFrame(() => {
-            camera.position.copy(initialPosition);
-            camera.lookAt(targetPosition);
-        });
 
         return null;
     }
@@ -111,59 +106,57 @@ window.initGame = (React, assetsUrl) => {
         return React.createElement('primitive', { object: copiedScene });
     }
 
-   function Hand() {
-    const handRef = useRef();
-    const { camera, mouse } = useThree();
-    const baseScale = 3;
+    function Hand() {
+        const handRef = useRef();
+        const { camera, mouse } = useThree();
+        const baseScale = 3;
 
-    useEffect(() => {
-        if (handRef.current) {
-            handRef.current.layers.set(1);
-        }
-    }, []);
+        useEffect(() => {
+            if (handRef.current) {
+                handRef.current.layers.set(1);
+            }
+        }, []);
 
-    useFrame((state) => {
-        if (handRef.current) {
-            const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-            vector.unproject(camera);
-            const dir = vector.sub(camera.position).normalize();
-            const distance = -camera.position.z / dir.z;
-            const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-            handRef.current.position.copy(pos);
+        useFrame((state) => {
+            if (handRef.current) {
+                const vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
+                vector.unproject(camera);
+                const dir = vector.sub(camera.position).normalize();
+                const distance = -camera.position.z / dir.z;
+                const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+                handRef.current.position.copy(pos);
 
-            const distanceFromCamera = camera.position.distanceTo(pos);
-            const scale = baseScale * Math.min(distanceFromCamera / 15, 1.5); // Limit max scale
-            handRef.current.scale.set(scale, scale, scale);
+                const distanceFromCamera = camera.position.distanceTo(pos);
+                const scale = baseScale * Math.min(distanceFromCamera / 15, 1.5);
+                handRef.current.scale.set(scale, scale, scale);
+                handRef.current.visible = true; 
+            }
+        });
 
-            // Always make it visible
-            handRef.current.visible = true; 
-        }
-    });
+        const handleClick = () => {
+            // Click logic...
+        };
 
-    const handleClick = () => {
-        // Click logic...
-    };
-
-    return React.createElement(
-        'group',
-        { ref: handRef, onClick: handleClick },
-        React.createElement(HandModel, { 
-            url: `${assetsUrl}/hand.glb`,
-            scale: [1, 1, 1],
-            position: [0, 0, 0],
-        })
-    );
-}
+        return React.createElement(
+            'group',
+            { ref: handRef, onClick: handleClick },
+            React.createElement(HandModel, { 
+                url: `${assetsUrl}/hand.glb`,
+                scale: [1, 1, 1],
+                position: [0, 0, 0],
+            })
+        );
+    }
 
     function MatchingCardGame() {
         const [cards, setCards] = useState([]);
         const [revealedCards, setRevealedCards] = useState([]);
         const [pairsFound, setPairsFound] = useState([]);
-        const totalPairs = 10;
+        const [totalPairs, setTotalPairs] = useState(5); // Start with 5 pairs
 
         useEffect(() => {
             resetGame();
-        }, [assetsUrl]);
+        }, [assetsUrl, totalPairs]);
 
         const resetGame = () => {
             const cardUrls = [];
@@ -211,6 +204,16 @@ window.initGame = (React, assetsUrl) => {
 
         const allPairsFound = pairsFound.length === totalPairs;
 
+        useEffect(() => {
+            if (allPairsFound) {
+                const timer = setTimeout(() => {
+                    setTotalPairs(prev => (prev === 5 ? 10 : 5)); // Toggle between 5 and 10 pairs
+                    resetGame();
+                }, 3000);
+                return () => clearTimeout(timer);
+            }
+        }, [allPairsFound]);
+
         return React.createElement(
             React.Fragment,
             null,
@@ -219,7 +222,7 @@ window.initGame = (React, assetsUrl) => {
             React.createElement('pointLight', { position: [10, 10, 10] }),
             React.createElement(
                 'group',
-                { renderOrder: 0 },  // Render this group first
+                { renderOrder: 0 },
                 React.createElement(TableModel),
                 React.createElement(TextModel),
                 React.createElement(ChairModel, { position: [-10, -2.5, -5] }),
@@ -241,7 +244,7 @@ window.initGame = (React, assetsUrl) => {
             ),
             React.createElement(
                 'group',
-                { renderOrder: 2 },  // Hand group should render last
+                { renderOrder: 2 },
                 React.createElement(Hand)
             )
         );
