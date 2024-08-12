@@ -21,7 +21,7 @@ window.initGame = (React, assetsUrl) => {
         return React.createElement(CardModel, {
             url: tableUrl,
             scale: [23, 5, 13],
-            position: [0, -2.5, 0]
+            position: [0, -2.5, -5]
         });
     }
 
@@ -29,7 +29,7 @@ window.initGame = (React, assetsUrl) => {
         const chairUrl = `${assetsUrl}/chair.glb`;
         return React.createElement(CardModel, {
             url: chairUrl,
-            scale: [2, 2, 2],
+            scale: [2, 2, -3],
             position: position
         });
     }
@@ -38,8 +38,8 @@ window.initGame = (React, assetsUrl) => {
         const textUrl = `${assetsUrl}/matchk.glb`;
         return React.createElement(CardModel, {
             url: textUrl,
-            scale: [5, 3, 5],
-            position: [-5, 5, 0]
+            scale: [5, 8, 15],
+            position: [-5, 5, -5]
         });
     }
 
@@ -56,7 +56,7 @@ window.initGame = (React, assetsUrl) => {
             React.createElement(CardModel, { 
                 url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
                 scale: [2, 2, 2],
-                position: [4, 0, 5.5]
+                position: [4, 0, 0.5]
             })
         );
     }
@@ -72,15 +72,15 @@ window.initGame = (React, assetsUrl) => {
         return React.createElement(CardModel, {
             url: `${assetsUrl}/finish.glb`,
             scale: [5, 5, 5],
-            position: [0, 5, 0],
+            position: [0, 5, -5],
             ref: modelRef,
             onClick: onClick
         });
     }
 
-    function Camera() {
+   function Camera() {
         const { camera } = useThree();
-        const initialPosition = new THREE.Vector3(13, 6, 2);
+        const initialPosition = new THREE.Vector3(11, 7, 1);
         const targetPosition = new THREE.Vector3(0, 0, 0);
 
         useEffect(() => {
@@ -89,6 +89,11 @@ window.initGame = (React, assetsUrl) => {
             camera.updateProjectionMatrix();
             camera.lookAt(targetPosition);
         }, [camera]);
+
+        useFrame(() => {
+            camera.position.copy(initialPosition);
+            camera.lookAt(targetPosition);
+        });
 
         return null;
     }
@@ -217,9 +222,9 @@ window.initGame = (React, assetsUrl) => {
                 { renderOrder: 0 },  // Render this group first
                 React.createElement(TableModel),
                 React.createElement(TextModel),
-                React.createElement(ChairModel, { position: [10, -2.5, 0] }),
-                React.createElement(ChairModel, { position: [0, -2.5, 10] }),
-                React.createElement(ChairModel, { position: [0, -2.5, -10] }),
+                React.createElement(ChairModel, { position: [10, -2.5, -5] }),
+                React.createElement(ChairModel, { position: [0, -2.5, 5] }),
+                React.createElement(ChairModel, { position: [0, -2.5, -15] }),
                 allPairsFound 
                     ? React.createElement(RotatingModel, { onClick: resetGame }) 
                     : cards.map((url, index) =>
