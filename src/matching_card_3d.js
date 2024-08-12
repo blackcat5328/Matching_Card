@@ -56,7 +56,7 @@ window.initGame = (React, assetsUrl) => {
             React.createElement(CardModel, { 
                 url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
                 scale: [2, 2, 2],
-                position: [4, 0, 0.5]
+                position: [5, 0, -0.2]
             })
         );
     }
@@ -72,15 +72,15 @@ window.initGame = (React, assetsUrl) => {
         return React.createElement(CardModel, {
             url: `${assetsUrl}/finish.glb`,
             scale: [5, 5, 5],
-            position: [0, 5, -5],
+            position: [2, 5, -5],
             ref: modelRef,
             onClick: onClick
         });
     }
 
-   function Camera() {
+      function Camera() {
         const { camera } = useThree();
-        const initialPosition = new THREE.Vector3(11, 7, 1);
+        const initialPosition = new THREE.Vector3(12, 7, -0.5);
         const targetPosition = new THREE.Vector3(0, 0, 0);
 
         useEffect(() => {
@@ -202,7 +202,7 @@ window.initGame = (React, assetsUrl) => {
             setRevealedCards([]);
         };
 
-        const cardSpacing = 2.5;
+        const cardSpacing = 2.2;
         const cardPositions = cards.map((_, index) => [
             (index % 4) * cardSpacing - (2.5 * 2),
             0.1,
@@ -222,9 +222,10 @@ window.initGame = (React, assetsUrl) => {
                 { renderOrder: 0 },  // Render this group first
                 React.createElement(TableModel),
                 React.createElement(TextModel),
-                React.createElement(ChairModel, { position: [10, -2.5, -5] }),
-                React.createElement(ChairModel, { position: [0, -2.5, 5] }),
-                React.createElement(ChairModel, { position: [0, -2.5, -15] }),
+                React.createElement(ChairModel, { position: [-10, -2.5, -5] }),
+                React.createElement(ChairModel, { position: [9, -2.5, -5] }),
+                React.createElement(ChairModel, { position: [2, -2.5, 5] }),
+                React.createElement(ChairModel, { position: [2, -2.5, -15] }),
                 allPairsFound 
                     ? React.createElement(RotatingModel, { onClick: resetGame }) 
                     : cards.map((url, index) =>
