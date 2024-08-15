@@ -20,8 +20,26 @@ window.initGame = (React, assetsUrl) => {
         const tableUrl = `${assetsUrl}/table.glb`;
         return React.createElement(CardModel, {
             url: tableUrl,
-            scale: [23, 5, 13],
-            position: [0, -2.5, -5]
+            scale: [8, 3.5, 13],
+            position: [1, -2.5, -5]
+        });
+    }
+
+    function Table2Model() {
+        const table2Url = `${assetsUrl}/cube.glb`;
+        return React.createElement(CardModel, {
+            url: table2Url,
+            scale: [100, 50, 100],
+            position: [5, 45, -5]
+        });
+    }
+
+    function BooModel() {
+        const table2Url = `${assetsUrl}/boo.glb`;
+        return React.createElement(CardModel, {
+            url: table2Url,
+            scale: [8, 7, 13],
+            position: [-11.5, 0, -5]
         });
     }
 
@@ -35,11 +53,11 @@ window.initGame = (React, assetsUrl) => {
     }
 
     function TextModel() {
-        const textUrl = `${assetsUrl}/matchk.glb`;
+        const textUrl = `${assetsUrl}/welcome.glb`;
         return React.createElement(CardModel, {
             url: textUrl,
             scale: [5, 8, 15],
-            position: [-5, 5, -5]
+            position: [-5, 6, -5]
         });
     }
 
@@ -56,12 +74,12 @@ window.initGame = (React, assetsUrl) => {
             React.createElement(CardModel, { 
                 url: isRevealed ? url : `${assetsUrl}/card_back.glb`,
                 scale: [2, 2, 2],
-                position: [5, 0, -0.2]
+                position: [5, 0, -0.5]
             })
         );
     }
 
-    function RotatingModel({ onClick }) {
+    function RotatingModel({ url, onClick }) {
         const modelRef = useRef();
         useFrame(() => {
             if (modelRef.current) {
@@ -70,7 +88,7 @@ window.initGame = (React, assetsUrl) => {
         });
 
         return React.createElement(CardModel, {
-            url: `${assetsUrl}/finish.glb`,
+            url: url,
             scale: [5, 5, 5],
             position: [-2, 5, -5],
             ref: modelRef,
@@ -80,10 +98,14 @@ window.initGame = (React, assetsUrl) => {
 
     function Camera() {
         const { camera } = useThree();
-        const initialPosition = new THREE.Vector3(12, 7, 0.5);
+        const initialPosition = new THREE.Vector3(10, 10, 0.5);
         const targetPosition = new THREE.Vector3(0, 0, 0);
+        const xLimitMin = 4;
+        const xLimitMax = 15;
+        const yLimitMin = 4;
+        const yLimitMax = 10;
 
-       useEffect(() => {
+        useEffect(() => {
             camera.position.copy(initialPosition);
             camera.fov = 75;
             camera.updateProjectionMatrix();
@@ -91,8 +113,9 @@ window.initGame = (React, assetsUrl) => {
         }, [camera]);
 
         useFrame(() => {
-            camera.position.copy(initialPosition);
-            camera.lookAt(targetPosition);
+            camera.position.z = 0.1;
+            camera.position.x = THREE.MathUtils.clamp(camera.position.x, xLimitMin, xLimitMax);
+            camera.position.y = THREE.MathUtils.clamp(camera.position.y, yLimitMin, yLimitMax);
         });
 
         return null;
@@ -130,7 +153,6 @@ window.initGame = (React, assetsUrl) => {
                 const distance = -camera.position.z / dir.z;
                 const pos = camera.position.clone().add(dir.multiplyScalar(distance));
                 handRef.current.position.copy(pos);
-
                 const distanceFromCamera = camera.position.distanceTo(pos);
                 const scale = baseScale * Math.min(distanceFromCamera / 15, 1.5);
                 handRef.current.scale.set(scale, scale, scale);
@@ -148,7 +170,7 @@ window.initGame = (React, assetsUrl) => {
             React.createElement(HandModel, { 
                 url: `${assetsUrl}/hand.glb`,
                 scale: [1, 1, 1],
-                position: [0, 0, 0],
+                position: [0.3, -0.3, 0],
             })
         );
     }
@@ -157,7 +179,7 @@ window.initGame = (React, assetsUrl) => {
         const [cards, setCards] = useState([]);
         const [revealedCards, setRevealedCards] = useState([]);
         const [pairsFound, setPairsFound] = useState([]);
-        const [totalPairs, setTotalPairs] = useState(5); // Start with 5 pairs
+        const [totalPairs, setTotalPairs] = useState(5);
 
         useEffect(() => {
             resetGame();
@@ -183,13 +205,15 @@ window.initGame = (React, assetsUrl) => {
         };
 
         const revealCard = (index) => {
-            setRevealedCards(prev => {
-                const newRevealed = [...prev, index];
-                if (newRevealed.length === 2) {
-                    setTimeout(() => checkMatch(newRevealed), 1000);
-                }
-                return newRevealed;
-            });
+            if (!revealedCards.includes(index) && revealedCards.length < 2) {
+                setRevealedCards(prev => {
+                    const newRevealed = [...prev, index];
+                    if (newRevealed.length === 2) {
+                        setTimeout(() => checkMatch(newRevealed), 1000);
+                    }
+                    return newRevealed;
+                });
+            }
         };
 
         const checkMatch = (revealed) => {
@@ -201,7 +225,7 @@ window.initGame = (React, assetsUrl) => {
         };
 
         const cardSpacing = 2.2;
-        const cardsPerRow = totalPairs === 5 ? 2 : 4; // Adjust for 5 or 10 pairs
+        const cardsPerRow = totalPairs === 5 ? 2 : 4;
         const cardPositions = cards.map((_, index) => [
             (index % cardsPerRow) * cardSpacing - (2.5 * cardsPerRow / 2),
             0.1,
@@ -213,7 +237,7 @@ window.initGame = (React, assetsUrl) => {
         useEffect(() => {
             if (allPairsFound) {
                 const timer = setTimeout(() => {
-                    setTotalPairs(prev => (prev === 5 ? 10 : 5)); // Toggle between 5 and 10 pairs
+                    setTotalPairs(prev => (prev === 5 ? 10 : 5));
                     resetGame();
                 }, 3000);
                 return () => clearTimeout(timer);
@@ -230,13 +254,18 @@ window.initGame = (React, assetsUrl) => {
                 'group',
                 { renderOrder: 0 },
                 React.createElement(TableModel),
+                React.createElement(Table2Model),
+                React.createElement(BooModel),
                 React.createElement(TextModel),
                 React.createElement(ChairModel, { position: [-10, -2.5, -5] }),
-                React.createElement(ChairModel, { position: [9, -2.5, -5] }),
+                React.createElement(ChairModel, { position: [10, -2.5, -5] }),
                 React.createElement(ChairModel, { position: [2, -2.5, 5] }),
                 React.createElement(ChairModel, { position: [2, -2.5, -15] }),
                 allPairsFound 
-                    ? React.createElement(RotatingModel, { onClick: resetGame }) 
+                    ? React.createElement(RotatingModel, { 
+                        url: totalPairs === 10 ? `${assetsUrl}/finish.glb` : `${assetsUrl}/next.glb`, 
+                        onClick: resetGame 
+                      }) 
                     : cards.map((url, index) =>
                         !pairsFound.includes(url) && React.createElement(Card, {
                             key: index,
