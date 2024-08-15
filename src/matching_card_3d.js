@@ -104,8 +104,8 @@ window.initGame = (React, assetsUrl) => {
         const xLimitMax = 15;
         const yLimitMin = 6;
         const yLimitMax = 10;
-        const zLimitMin = 0.3;
-        const zLimitMax = 0.5;
+        const zLimitMin = 0.1;
+        const zLimitMax = 0.9;
 
         useEffect(() => {
             camera.position.copy(initialPosition);
@@ -294,8 +294,8 @@ window.initGame = (React, assetsUrl) => {
                 React.createElement(Table2Model),
                 React.createElement(BooModel),
                 React.createElement(TextModel),
-                React.createElement(ChairModel, { position: [-10, -2.5, -5] }),
-                React.createElement(ChairModel, { position: [10, -2.5, -5] }),
+                React.createElement(ChairModel, { position: [-11, -2.5, -5] }),
+                React.createElement(ChairModel, { position: [11, -2.5, -5] }),
                 React.createElement(ChairModel, { position: [2, -2.5, 5] }),
                 React.createElement(ChairModel, { position: [2, -2.5, -15] }),
                 allPairsFound 
