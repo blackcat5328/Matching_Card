@@ -102,8 +102,10 @@ window.initGame = (React, assetsUrl) => {
         const targetPosition = new THREE.Vector3(0, 0, 0);
         const xLimitMin = 4;
         const xLimitMax = 15;
-        const yLimitMin = 4;
+        const yLimitMin = 6;
         const yLimitMax = 10;
+        const zLimitMin = 0.3;
+        const zLimitMax = 0.5;
 
         useEffect(() => {
             camera.position.copy(initialPosition);
@@ -113,7 +115,7 @@ window.initGame = (React, assetsUrl) => {
         }, [camera]);
 
         useFrame(() => {
-            camera.position.z = 0.1;
+            camera.position.z = THREE.MathUtils.clamp(camera.position.z, zLimitMin, zLimitMax);
             camera.position.x = THREE.MathUtils.clamp(camera.position.x, xLimitMin, xLimitMax);
             camera.position.y = THREE.MathUtils.clamp(camera.position.y, yLimitMin, yLimitMax);
         });
@@ -187,10 +189,21 @@ window.initGame = (React, assetsUrl) => {
 
         const resetGame = () => {
             const cardUrls = [];
-            for (let i = 1; i <= totalPairs; i++) {
-                cardUrls.push(`${assetsUrl}/card_${i}.glb`);
-                cardUrls.push(`${assetsUrl}/card_${i}.glb`);
+            const cardCount = 10; // Total cards available
+            const selectedCards = new Set();
+
+            while (selectedCards.size < totalPairs) {
+                const randomIndex = Math.floor(Math.random() * cardCount) + 1;
+                const cardUrl = `${assetsUrl}/card_${randomIndex}.glb`;
+                selectedCards.add(cardUrl);
             }
+
+            // Duplicate selected cards to have pairs
+            selectedCards.forEach(card => {
+                cardUrls.push(card);
+                cardUrls.push(card);
+            });
+
             setCards(shuffleArray(cardUrls));
             setRevealedCards([]);
             setPairsFound([]);
@@ -243,6 +256,30 @@ window.initGame = (React, assetsUrl) => {
                 return () => clearTimeout(timer);
             }
         }, [allPairsFound]);
+
+        // Disable right-click context menu
+        useEffect(() => {
+            const handleContextMenu = (event) => {
+                event.preventDefault();
+            };
+
+            window.addEventListener('contextmenu', handleContextMenu);
+            return () => {
+                window.removeEventListener('contextmenu', handleContextMenu);
+            };
+        }, []);
+
+        // Prevent camera movement on mouse down
+        const handleMouseDown = (event) => {
+            event.preventDefault();
+        };
+
+        useEffect(() => {
+            window.addEventListener('mousedown', handleMouseDown);
+            return () => {
+                window.removeEventListener('mousedown', handleMouseDown);
+            };
+        }, []);
 
         return React.createElement(
             React.Fragment,
